@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import './App.css';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 const API = 'https://bh-backend-clean.onrender.com';
 
@@ -140,15 +142,27 @@ const Photographer = () => {
     }
   };
 
-  const exportSelections = (clientId, clientName) => {
+  const exportSelections = async (clientId, clientName) => {
     const selected = getClientSelections(clientId);
-    const blob = new Blob([selected.join('\n')], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.download = `${clientName}_selections.txt`;
-    link.href = url;
-    link.click();
-    URL.revokeObjectURL(url);
+    if (!selected.length) return;
+
+    const zip = new JSZip();
+
+    for (let i = 0; i < selected.length; i++) {
+      const imageUrl = selected[i];
+      try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const filename = `image-${i + 1}.jpg`;
+        zip.file(filename, blob);
+      } catch (err) {
+        console.error('Error downloading image:', imageUrl, err);
+      }
+    }
+
+    zip.generateAsync({ type: 'blob' }).then((zipFile) => {
+      saveAs(zipFile, `${clientName}_selections.zip`);
+    });
   };
 
   const handleDeleteClient = async (clientId) => {
