@@ -80,7 +80,7 @@ const Photographer = () => {
   };
 
   const getClientSelections = (clientId) => {
-    const sel = selections.find(s => s.id === clientId);
+    const sel = selections.find((s) => s.id === clientId);
     return sel ? sel.selected : [];
   };
 
@@ -98,7 +98,7 @@ const Photographer = () => {
       try {
         const res = await fetch('https://api.cloudinary.com/v1_1/dsgeprirb/image/upload', {
           method: 'POST',
-          body: formData
+          body: formData,
         });
         const data = await res.json();
         if (data.secure_url) uploadedURLs.push(data.secure_url);
@@ -112,7 +112,7 @@ const Photographer = () => {
         await fetch(`${API}/upload`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: clientId, images: uploadedURLs })
+          body: JSON.stringify({ id: clientId, images: uploadedURLs }),
         });
         fetchClients();
       } catch (err) {
@@ -124,15 +124,15 @@ const Photographer = () => {
   };
 
   const handleImageRemove = async (clientId, imageURL) => {
-    const client = clients.find(c => c.id === clientId);
+    const client = clients.find((c) => c.id === clientId);
     if (!client || !client.images) return;
-    const updatedImages = client.images.filter(img => img !== imageURL);
+    const updatedImages = client.images.filter((img) => img !== imageURL);
 
     try {
       await fetch(`${API}/update-images`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: clientId, images: updatedImages })
+        body: JSON.stringify({ id: clientId, images: updatedImages }),
       });
       fetchClients();
     } catch (err) {
@@ -147,17 +147,17 @@ const Photographer = () => {
     const confirm = window.confirm(`Delete ${selected.length} selected images?`);
     if (!confirm) return;
 
-    const client = clients.find(c => c.id === clientId);
-    const updatedImages = client.images.filter(img => !selected.includes(img));
+    const client = clients.find((c) => c.id === clientId);
+    const updatedImages = client.images.filter((img) => !selected.includes(img));
 
     try {
       await fetch(`${API}/update-images`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: clientId, images: updatedImages })
+        body: JSON.stringify({ id: clientId, images: updatedImages }),
       });
       fetchClients();
-      setBulkDelete(prev => ({ ...prev, [clientId]: [] }));
+      setBulkDelete((prev) => ({ ...prev, [clientId]: [] }));
     } catch (err) {
       console.error('Bulk delete failed:', err);
     }
@@ -179,36 +179,39 @@ const Photographer = () => {
       }
     }
 
-    zip.generateAsync({ type: 'blob' }).then(zipFile => {
+    zip.generateAsync({ type: 'blob' }).then((zipFile) => {
       saveAs(zipFile, `${clientName}_selections.zip`);
     });
   };
 
   const handleDeleteClient = async (clientId) => {
-    const confirm = window.confirm("Are you sure you want to delete this client?");
+    const confirm = window.confirm('Are you sure you want to delete this client?');
     if (!confirm) return;
 
     try {
       await fetch(`${API}/clients/${clientId}`, { method: 'DELETE' });
       fetchClients();
     } catch (err) {
-      console.error("Failed to delete client:", err);
+      console.error('Failed to delete client:', err);
     }
   };
 
-  const handleKeyDown = useCallback((e) => {
-    if (!enlargedGroup.length) return;
-    if (e.key === 'ArrowLeft') {
-      const newIndex = (enlargedIndex === 0 ? enlargedGroup.length - 1 : enlargedIndex - 1);
-      setEnlargedIndex(newIndex);
-      setEnlargedImage(enlargedGroup[newIndex]);
-    }
-    if (e.key === 'ArrowRight') {
-      const newIndex = (enlargedIndex === enlargedGroup.length - 1 ? 0 : enlargedIndex + 1);
-      setEnlargedIndex(newIndex);
-      setEnlargedImage(enlargedGroup[newIndex]);
-    }
-  }, [enlargedGroup, enlargedIndex]);
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (!enlargedGroup.length) return;
+      if (e.key === 'ArrowLeft') {
+        const newIndex = enlargedIndex === 0 ? enlargedGroup.length - 1 : enlargedIndex - 1;
+        setEnlargedIndex(newIndex);
+        setEnlargedImage(enlargedGroup[newIndex]);
+      }
+      if (e.key === 'ArrowRight') {
+        const newIndex = enlargedIndex === enlargedGroup.length - 1 ? 0 : enlargedIndex + 1;
+        setEnlargedIndex(newIndex);
+        setEnlargedImage(enlargedGroup[newIndex]);
+      }
+    },
+    [enlargedGroup, enlargedIndex]
+  );
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -229,34 +232,59 @@ const Photographer = () => {
 
       <div className="client-list">
         {clients.map((client) => {
-          const selectedImages = getClientSelections(client.id).filter(img => client.images.includes(img));
+          const selectedImages = getClientSelections(client.id).filter((img) => client.images.includes(img));
           const markedForDelete = bulkDelete[client.id] || [];
 
           return (
             <div key={client.id} className="client-card">
-              <p><strong>{client.name}</strong> (ID: {client.id})</p>
-              <a href={`/gallery/${client.id}`} target="_blank" rel="noreferrer">View Gallery →</a>
+              <p>
+                <strong>{client.name}</strong> (ID: {client.id})
+              </p>
+              <a href={`/gallery/${client.id}`} target="_blank" rel="noreferrer">
+                View Gallery →
+              </a>
 
-              <input type="file" multiple accept="image/*" disabled={uploadingId === client.id} onChange={(e) => handleUpload(e, client.id)} />
-              <p>Gallery: {client.images?.length || 0} | Selected: {selectedImages.length}</p>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                disabled={uploadingId === client.id}
+                onChange={(e) => handleUpload(e, client.id)}
+              />
+              <p>
+                Gallery: {client.images?.length || 0} | Selected: {selectedImages.length}
+              </p>
 
-              <button onClick={() => exportSelections(client.id, client.name)} disabled={selectedImages.length === 0}>Export Selections</button>
-              <button onClick={() => handleDeleteClient(client.id)} style={{ marginLeft: '0.5rem', backgroundColor: '#a00' }}>Delete Client</button>
-              <button onClick={() => {
-                setBulkDelete(prev => ({
-                  ...prev,
-                  [client.id]: prev[client.id]?.length ? [] : []
-                }));
-              }} style={{ marginLeft: '0.5rem' }}>🗑️ Bulk Delete Mode</button>
+              <button onClick={() => exportSelections(client.id, client.name)} disabled={selectedImages.length === 0}>
+                Export Selections
+              </button>
+              <button onClick={() => handleDeleteClient(client.id)} style={{ marginLeft: '0.5rem', backgroundColor: '#a00' }}>
+                Delete Client
+              </button>
+              <button
+                onClick={() =>
+                  setBulkDelete((prev) => ({
+                    ...prev,
+                    [client.id]: prev[client.id]?.length ? [] : [],
+                  }))
+                }
+                style={{ marginLeft: '0.5rem' }}
+              >
+                🗑️ Bulk Delete Mode
+              </button>
 
               {client.images && (
                 <div className="thumbnail-grid">
                   {client.images.map((src, idx) => (
-                    <div key={idx} className="thumbnail-wrapper" onDoubleClick={() => {
-                      setEnlargedImage(src);
-                      setEnlargedGroup(client.images);
-                      setEnlargedIndex(idx);
-                    }}>
+                    <div
+                      key={idx}
+                      className="thumbnail-wrapper"
+                      onDoubleClick={() => {
+                        setEnlargedImage(src);
+                        setEnlargedGroup(client.images);
+                        setEnlargedIndex(idx);
+                      }}
+                    >
                       <img src={src} alt={`img-${idx}`} className="thumbnail" />
                       {bulkDelete[client.id] && (
                         <input
@@ -266,8 +294,8 @@ const Photographer = () => {
                           onChange={(e) => {
                             const updated = e.target.checked
                               ? [...(bulkDelete[client.id] || []), src]
-                              : (bulkDelete[client.id] || []).filter(i => i !== src);
-                            setBulkDelete(prev => ({ ...prev, [client.id]: updated }));
+                              : (bulkDelete[client.id] || []).filter((i) => i !== src);
+                            setBulkDelete((prev) => ({ ...prev, [client.id]: updated }));
                           }}
                         />
                       )}
@@ -277,7 +305,10 @@ const Photographer = () => {
               )}
 
               {markedForDelete.length > 0 && (
-                <button onClick={() => handleBulkDelete(client.id)} style={{ marginTop: '0.5rem', backgroundColor: '#a00' }}>
+                <button
+                  onClick={() => handleBulkDelete(client.id)}
+                  style={{ marginTop: '0.5rem', backgroundColor: '#a00' }}
+                >
                   Delete Selected ({markedForDelete.length})
                 </button>
               )}
@@ -289,19 +320,34 @@ const Photographer = () => {
       <AnimatePresence>
         {enlargedImage && (
           <motion.div className="overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.img src={enlargedImage} alt="Enlarged" className="enlarged-img" initial={{ scale: 0.7 }} animate={{ scale: 1 }} exit={{ scale: 0.7 }} />
+            <motion.img
+              src={enlargedImage}
+              alt="Enlarged"
+              className="enlarged-img"
+              initial={{ scale: 0.7 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.7 }}
+            />
             <div className="nav-buttons">
-              <button onClick={() => {
-                const newIndex = (enlargedIndex - 1 + enlargedGroup.length) % enlargedGroup.length;
-                setEnlargedIndex(newIndex);
-                setEnlargedImage(enlargedGroup[newIndex]);
-              }}>◀</button>
+              <button
+                onClick={() => {
+                  const newIndex = (enlargedIndex - 1 + enlargedGroup.length) % enlargedGroup.length;
+                  setEnlargedIndex(newIndex);
+                  setEnlargedImage(enlargedGroup[newIndex]);
+                }}
+              >
+                ◀
+              </button>
               <button onClick={() => setEnlargedImage(null)}>⬅ Back</button>
-              <button onClick={() => {
-                const newIndex = (enlargedIndex + 1) % enlargedGroup.length;
-                setEnlargedIndex(newIndex);
-                setEnlargedImage(enlargedGroup[newIndex]);
-              }}>▶</button>
+              <button
+                onClick={() => {
+                  const newIndex = (enlargedIndex + 1) % enlargedGroup.length;
+                  setEnlargedIndex(newIndex);
+                  setEnlargedImage(enlargedGroup[newIndex]);
+                }}
+              >
+                ▶
+              </button>
             </div>
           </motion.div>
         )}
