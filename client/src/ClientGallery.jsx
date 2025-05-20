@@ -1,4 +1,4 @@
-// Placeholder - Insert final ClientGallery.jsx content hereimport React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import './App.css';
