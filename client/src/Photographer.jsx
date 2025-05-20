@@ -1,34 +1,3 @@
-const addClient = async () => {
-  if (!newClientId || !newClientName || !newPassword) {
-    alert('Please fill in all fields.');
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API}/clients`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: newClientId,
-        name: newClientName,
-        password: newPassword,
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      alert(err.error || 'Failed to add client.');
-      return;
-    }
-
-    setNewClientName('');
-    setNewClientId('');
-    setNewPassword('');
-    fetchClients();
-  } catch (err) {
-    console.error('Error adding client:', err);
-  }
-};
 import React, { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './App.css';
