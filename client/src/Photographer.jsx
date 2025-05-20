@@ -15,8 +15,8 @@ const Photographer = () => {
   const [uploadingId, setUploadingId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [enlargedImage, setEnlargedImage] = useState(null);
-  const [enlargedGroup, setEnlargedGroup] = useState([]);
   const [enlargedIndex, setEnlargedIndex] = useState(0);
+  const [enlargedGroup, setEnlargedGroup] = useState([]);
   const [bulkDelete, setBulkDelete] = useState({});
 
   useEffect(() => {
@@ -80,7 +80,7 @@ const Photographer = () => {
   };
 
   const getClientSelections = (clientId) => {
-    const sel = selections.find((s) => s.id === clientId);
+    const sel = selections.find(s => s.id === clientId);
     return sel ? sel.selected : [];
   };
 
@@ -98,7 +98,7 @@ const Photographer = () => {
       try {
         const res = await fetch('https://api.cloudinary.com/v1_1/dsgeprirb/image/upload', {
           method: 'POST',
-          body: formData,
+          body: formData
         });
         const data = await res.json();
         if (data.secure_url) uploadedURLs.push(data.secure_url);
@@ -112,7 +112,7 @@ const Photographer = () => {
         await fetch(`${API}/upload`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: clientId, images: uploadedURLs }),
+          body: JSON.stringify({ id: clientId, images: uploadedURLs })
         });
         fetchClients();
       } catch (err) {
@@ -124,15 +124,15 @@ const Photographer = () => {
   };
 
   const handleImageRemove = async (clientId, imageURL) => {
-    const client = clients.find((c) => c.id === clientId);
+    const client = clients.find(c => c.id === clientId);
     if (!client || !client.images) return;
-    const updatedImages = client.images.filter((img) => img !== imageURL);
+    const updatedImages = client.images.filter(img => img !== imageURL);
 
     try {
       await fetch(`${API}/update-images`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: clientId, images: updatedImages }),
+        body: JSON.stringify({ id: clientId, images: updatedImages })
       });
       fetchClients();
     } catch (err) {
@@ -141,23 +141,20 @@ const Photographer = () => {
   };
 
   const handleBulkDelete = async (clientId) => {
-    const selected = bulkDelete[clientId] || [];
-    if (!selected.length) return;
-
-    const confirm = window.confirm(`Delete ${selected.length} selected images?`);
+    const selectedToDelete = bulkDelete[clientId] || [];
+    if (!selectedToDelete.length) return;
+    const confirm = window.confirm(`Delete ${selectedToDelete.length} selected images?`);
     if (!confirm) return;
 
-    const client = clients.find((c) => c.id === clientId);
-    const updatedImages = client.images.filter((img) => !selected.includes(img));
-
+    const updatedImages = clients.find(c => c.id === clientId).images.filter(img => !selectedToDelete.includes(img));
     try {
       await fetch(`${API}/update-images`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: clientId, images: updatedImages }),
+        body: JSON.stringify({ id: clientId, images: updatedImages })
       });
+      setBulkDelete(prev => ({ ...prev, [clientId]: [] }));
       fetchClients();
-      setBulkDelete((prev) => ({ ...prev, [clientId]: [] }));
     } catch (err) {
       console.error('Bulk delete failed:', err);
     }
@@ -166,8 +163,8 @@ const Photographer = () => {
   const exportSelections = async (clientId, clientName) => {
     const selected = getClientSelections(clientId);
     if (!selected.length) return;
-
     const zip = new JSZip();
+
     for (let i = 0; i < selected.length; i++) {
       const imageUrl = selected[i];
       try {
@@ -175,43 +172,35 @@ const Photographer = () => {
         const blob = await response.blob();
         zip.file(`image-${i + 1}.jpg`, blob);
       } catch (err) {
-        console.error('Error downloading image:', imageUrl, err);
+        console.error('Error downloading image:', err);
       }
     }
 
-    zip.generateAsync({ type: 'blob' }).then((zipFile) => {
-      saveAs(zipFile, `${clientName}_selections.zip`);
-    });
+    zip.generateAsync({ type: 'blob' }).then(zipFile => saveAs(zipFile, `${clientName}_selections.zip`));
   };
 
   const handleDeleteClient = async (clientId) => {
-    const confirm = window.confirm('Are you sure you want to delete this client?');
+    const confirm = window.confirm("Are you sure you want to delete this client?");
     if (!confirm) return;
-
     try {
       await fetch(`${API}/clients/${clientId}`, { method: 'DELETE' });
       fetchClients();
     } catch (err) {
-      console.error('Failed to delete client:', err);
+      console.error("Failed to delete client:", err);
     }
   };
 
-  const handleKeyDown = useCallback(
-    (e) => {
-      if (!enlargedGroup.length) return;
-      if (e.key === 'ArrowLeft') {
-        const newIndex = enlargedIndex === 0 ? enlargedGroup.length - 1 : enlargedIndex - 1;
-        setEnlargedIndex(newIndex);
-        setEnlargedImage(enlargedGroup[newIndex]);
-      }
-      if (e.key === 'ArrowRight') {
-        const newIndex = enlargedIndex === enlargedGroup.length - 1 ? 0 : enlargedIndex + 1;
-        setEnlargedIndex(newIndex);
-        setEnlargedImage(enlargedGroup[newIndex]);
-      }
-    },
-    [enlargedGroup, enlargedIndex]
-  );
+  const handleKeyDown = useCallback((e) => {
+    if (!enlargedImage || enlargedGroup.length < 2) return;
+    if (e.key === 'ArrowLeft') {
+      setEnlargedIndex((prev) => (prev === 0 ? enlargedGroup.length - 1 : prev - 1));
+      setEnlargedImage(enlargedGroup[enlargedIndex === 0 ? enlargedGroup.length - 1 : enlargedIndex - 1]);
+    }
+    if (e.key === 'ArrowRight') {
+      setEnlargedIndex((prev) => (prev === enlargedGroup.length - 1 ? 0 : prev + 1));
+      setEnlargedImage(enlargedGroup[enlargedIndex === enlargedGroup.length - 1 ? 0 : enlargedIndex + 1]);
+    }
+  }, [enlargedImage, enlargedGroup, enlargedIndex]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -221,6 +210,7 @@ const Photographer = () => {
   return (
     <motion.div className="photographer-dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <h1>Photographer Dashboard</h1>
+      {loading && <p style={{ color: 'orange' }}>Loading clients...</p>}
 
       <div className="form-section">
         <h2>Create New Client Gallery</h2>
@@ -231,49 +221,29 @@ const Photographer = () => {
       </div>
 
       <div className="client-list">
+        <h2>Existing Clients</h2>
         {clients.map((client) => {
-          const selectedImages = getClientSelections(client.id).filter((img) => client.images.includes(img));
-          const markedForDelete = bulkDelete[client.id] || [];
+          const selectedImages = getClientSelections(client.id).filter(img => client.images.includes(img));
+          const selectedToDelete = bulkDelete[client.id] || [];
 
           return (
             <div key={client.id} className="client-card">
-              <p>
-                <strong>{client.name}</strong> (ID: {client.id})
-              </p>
-              <a href={`/gallery/${client.id}`} target="_blank" rel="noreferrer">
-                View Gallery →
-              </a>
+              <p><strong>{client.name}</strong> (ID: {client.id})</p>
+              <a href={`/gallery/${client.id}`} target="_blank" rel="noreferrer">View Gallery →</a>
 
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                disabled={uploadingId === client.id}
-                onChange={(e) => handleUpload(e, client.id)}
-              />
-              <p>
-                Gallery: {client.images?.length || 0} | Selected: {selectedImages.length}
-              </p>
+              <input type="file" multiple accept="image/*" disabled={uploadingId === client.id} onChange={(e) => handleUpload(e, client.id)} />
+              {uploadingId === client.id && <p style={{ color: 'orange' }}>Uploading...</p>}
 
-              <button onClick={() => exportSelections(client.id, client.name)} disabled={selectedImages.length === 0}>
-                Export Selections
-              </button>
-              <button onClick={() => handleDeleteClient(client.id)} style={{ marginLeft: '0.5rem', backgroundColor: '#a00' }}>
-                Delete Client
-              </button>
-              <button
-                onClick={() =>
-                  setBulkDelete((prev) => ({
-                    ...prev,
-                    [client.id]: prev[client.id]?.length ? [] : [],
-                  }))
-                }
-                style={{ marginLeft: '0.5rem' }}
-              >
-                🗑️ Bulk Delete Mode
-              </button>
+              <div style={{ marginTop: '0.5rem' }}>
+                <strong>Gallery:</strong> {client.images?.length || 0} images<br />
+                <strong>Selected:</strong> {selectedImages.length} images
+              </div>
 
-              {client.images && (
+              <button onClick={() => exportSelections(client.id, client.name)} disabled={selectedImages.length === 0}>Export Selections</button>
+              <button onClick={() => handleDeleteClient(client.id)} style={{ marginLeft: '0.5rem', backgroundColor: '#a00' }}>Delete Client</button>
+              <button onClick={() => setBulkDelete(prev => ({ ...prev, [client.id]: prev[client.id]?.length ? [] : [] }))} style={{ marginLeft: '0.5rem' }}>🗑️ Bulk Delete Mode</button>
+
+              {client.images && client.images.length > 0 && (
                 <div className="thumbnail-grid">
                   {client.images.map((src, idx) => (
                     <div
@@ -285,17 +255,18 @@ const Photographer = () => {
                         setEnlargedIndex(idx);
                       }}
                     >
-                      <img src={src} alt={`img-${idx}`} className="thumbnail" />
+                      <img src={src} alt={`Gallery ${idx}`} className="thumbnail" />
                       {bulkDelete[client.id] && (
                         <input
                           type="checkbox"
                           className="bulk-checkbox"
                           checked={bulkDelete[client.id]?.includes(src)}
                           onChange={(e) => {
-                            const updated = e.target.checked
-                              ? [...(bulkDelete[client.id] || []), src]
-                              : (bulkDelete[client.id] || []).filter((i) => i !== src);
-                            setBulkDelete((prev) => ({ ...prev, [client.id]: updated }));
+                            setBulkDelete(prev => {
+                              const current = prev[client.id] || [];
+                              const updated = e.target.checked ? [...current, src] : current.filter(i => i !== src);
+                              return { ...prev, [client.id]: updated };
+                            });
                           }}
                         />
                       )}
@@ -304,12 +275,12 @@ const Photographer = () => {
                 </div>
               )}
 
-              {markedForDelete.length > 0 && (
+              {bulkDelete[client.id]?.length > 0 && (
                 <button
                   onClick={() => handleBulkDelete(client.id)}
                   style={{ marginTop: '0.5rem', backgroundColor: '#a00' }}
                 >
-                  Delete Selected ({markedForDelete.length})
+                  Delete Selected ({bulkDelete[client.id].length})
                 </button>
               )}
             </div>
@@ -320,34 +291,11 @@ const Photographer = () => {
       <AnimatePresence>
         {enlargedImage && (
           <motion.div className="overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.img
-              src={enlargedImage}
-              alt="Enlarged"
-              className="enlarged-img"
-              initial={{ scale: 0.7 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.7 }}
-            />
+            <motion.img src={enlargedImage} alt="Enlarged" className="enlarged-img" initial={{ scale: 0.7 }} animate={{ scale: 1 }} exit={{ scale: 0.7 }} />
             <div className="nav-buttons">
-              <button
-                onClick={() => {
-                  const newIndex = (enlargedIndex - 1 + enlargedGroup.length) % enlargedGroup.length;
-                  setEnlargedIndex(newIndex);
-                  setEnlargedImage(enlargedGroup[newIndex]);
-                }}
-              >
-                ◀
-              </button>
+              <button onClick={() => setEnlargedImage(enlargedGroup[(enlargedIndex - 1 + enlargedGroup.length) % enlargedGroup.length])}>◀</button>
               <button onClick={() => setEnlargedImage(null)}>⬅ Back</button>
-              <button
-                onClick={() => {
-                  const newIndex = (enlargedIndex + 1) % enlargedGroup.length;
-                  setEnlargedIndex(newIndex);
-                  setEnlargedImage(enlargedGroup[newIndex]);
-                }}
-              >
-                ▶
-              </button>
+              <button onClick={() => setEnlargedImage(enlargedGroup[(enlargedIndex + 1) % enlargedGroup.length])}>▶</button>
             </div>
           </motion.div>
         )}
