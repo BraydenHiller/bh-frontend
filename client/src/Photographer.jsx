@@ -44,6 +44,7 @@ const Photographer = () => {
     }
   };
 
+  // ✅ This is the function that was missing or misplaced
   const addClient = async () => {
     if (!newClientId || !newClientName || !newPassword) {
       alert('Please fill in all fields.');
@@ -92,6 +93,7 @@ const Photographer = () => {
           method: 'POST',
           body: formData
         });
+
         const data = await res.json();
         if (data.secure_url) uploadedURLs.push(data.secure_url);
       } catch (err) {
@@ -104,8 +106,9 @@ const Photographer = () => {
         await fetch(`${API}/upload`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: clientId, images: uploadedURLs })
+          body: JSON.stringify({ id: clientId, images: uploadedURLs }),
         });
+
         fetchClients();
       } catch (err) {
         console.error('Failed to send to backend:', err);
