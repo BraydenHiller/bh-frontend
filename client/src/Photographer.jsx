@@ -260,11 +260,16 @@ const Photographer = () => {
               {visibleImages && (
                 <div className="thumbnail-grid">
                   {visibleImages.map((src, idx) => (
-                    <div key={idx} className="thumbnail-wrapper" onDoubleClick={() => {
-                      setEnlargedImage(src);
-                      setEnlargedGroup(visibleImages);
-                      setEnlargedIndex(idx);
-                    }}>
+                    <div
+  key={idx}
+  className={`thumbnail-wrapper ${selectedImages.includes(src) ? 'selected-admin' : ''}`}
+  onDoubleClick={() => {
+    setEnlargedImage(src);
+    setEnlargedGroup(visibleImages);
+    setEnlargedIndex(idx);
+  }}
+>
+
                       <img src={src} alt={`img-${idx}`} className="thumbnail" />
                       {bulkDelete[client.id] && (
                         <input
