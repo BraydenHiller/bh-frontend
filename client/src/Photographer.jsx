@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import './App.css';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -14,6 +14,7 @@ const Photographer = () => {
   const [newPassword, setNewPassword] = useState('');
   const [uploadingId, setUploadingId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [enlargedImage, setEnlargedImage] = useState(null);
 
   useEffect(() => {
     fetchClients();
@@ -233,7 +234,7 @@ const Photographer = () => {
                   {client.images.map((src, idx) => {
                     const isSelected = selectedImages.includes(src);
                     return (
-                      <div key={idx} className="thumbnail-wrapper">
+                      <div key={idx} className="thumbnail-wrapper" onClick={() => setEnlargedImage(src)}>
                         <img
                           src={src}
                           alt={`Gallery ${idx}`}
@@ -249,7 +250,8 @@ const Photographer = () => {
                         />
                         <button
                           className="delete-thumbnail-btn"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             const confirmDelete = window.confirm("Remove this image?");
                             if (confirmDelete) handleImageRemove(client.id, src);
                           }}
@@ -265,6 +267,36 @@ const Photographer = () => {
           );
         })}
       </div>
+
+      <AnimatePresence>
+        {enlargedImage && (
+          <motion.div
+            className="overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setEnlargedImage(null)}
+          >
+            <motion.img
+              src={enlargedImage}
+              alt="Enlarged"
+              className="enlarged-img"
+              initial={{ scale: 0.7 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.7 }}
+            />
+            <button
+              className="back-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEnlargedImage(null);
+              }}
+            >
+              ⬅ Back
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
