@@ -1,24 +1,25 @@
+
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Photographer from './Photographer';
+import './App.css';
 import ClientLogin from './ClientLogin';
 import ClientGallery from './ClientGallery';
+import Photographer from './Photographer';
 
-const App = () => {
+function App() {
+  const query = new URLSearchParams(window.location.search);
+  const view = query.get('view');
+
   return (
-    <Router>
-      <Routes>
-        {/* Photographer dashboard */}
-        <Route path="/" element={<Photographer />} />
-
-        {/* Client login page */}
-        <Route path="/login" element={<ClientLogin />} />
-
-        {/* Client-specific gallery */}
-        <Route path="/gallery/:id" element={<ClientGallery />} />
-      </Routes>
-    </Router>
+    <div className="App">
+      {view === 'gallery' ? (
+        <ClientGallery />
+      ) : view === 'photographer' ? (
+        <Photographer />
+      ) : (
+        <ClientLogin />
+      )}
+    </div>
   );
-};
+}
 
 export default App;
