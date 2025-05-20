@@ -9,140 +9,126 @@ const ClientGallery = () => {
   const { clientId } = useParams();
   const [client, setClient] = useState(null);
   const [selected, setSelected] = useState([]);
-  const [enlargedIndex, setEnlargedIndex] = useState(0);
-  const [enlargedImage, setEnlargedImage] = useState(null);
+  const [enlargedIndex, setEnlargedIndex] = useState(null);
 
   useEffect(() => {
-    fetch(`${API}/clients`)
-      .then(res => res.json())
-      .then(data => {
-        const found = data.find(c => c.id === clientId);
-        setClient(found);
-      });
+    const fetchClient = async () => {
+      try {
+        const res = await fetch(`${API}/clients`);
+        const data = await res.json();
+        const match = data.find(c => c.id === clientId);
+        setClient(match);
+      } catch (err) {
+        console.error('Failed to fetch client:', err);
+      }
+    };
 
-    fetch(`${API}/selections`)
-      .then(res => res.json())
-      .then(data => {
+    const fetchSelections = async () => {
+      try {
+        const res = await fetch(`${API}/selections`);
+        const data = await res.json();
         const match = data.find(s => s.id === clientId);
-        if (match) setSelected(match.selected);
-      });
+        setSelected(match?.selected || []);
+      } catch (err) {
+        console.error('Failed to fetch selections:', err);
+      }
+    };
+
+    fetchClient();
+    fetchSelections();
   }, [clientId]);
 
-  const toggleSelect = (url) => {
+  const handleSelect = (img) => {
     setSelected(prev =>
-      prev.includes(url) ? prev.filter(i => i !== url) : [...prev, url]
+      prev.includes(img) ? prev.filter(i => i !== img) : [...prev, img]
     );
   };
 
-  const submitSelections = () => {
-    fetch(`${API}/selections`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: clientId, selected })
-    })
-      .then(() => alert('Selections saved!'))
-      .catch(err => console.error(err));
+  const handleSubmit = async () => {
+    try {
+      await fetch(`${API}/selections`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: clientId, selected })
+      });
+      alert('Selections submitted!');
+    } catch (err) {
+      console.error('Failed to submit selections:', err);
+    }
   };
 
-  const handleKeyDown = useCallback((e) => {
-    if (!enlargedImage || !client?.images?.length) return;
+  const goToPrev = useCallback(() => {
+    setEnlargedIndex(prev => (prev === 0 ? client.images.length - 1 : prev - 1));
+  }, [client]);
 
-    if (e.key === 'ArrowLeft') {
-      const newIndex = (enlargedIndex - 1 + client.images.length) % client.images.length;
-      setEnlargedIndex(newIndex);
-      setEnlargedImage(client.images[newIndex]);
-    }
+  const goToNext = useCallback(() => {
+    setEnlargedIndex(prev => (prev === client.images.length - 1 ? 0 : prev + 1));
+  }, [client]);
 
-    if (e.key === 'ArrowRight') {
-      const newIndex = (enlargedIndex + 1) % client.images.length;
-      setEnlargedIndex(newIndex);
-      setEnlargedImage(client.images[newIndex]);
-    }
-  }, [client, enlargedIndex, enlargedImage]);
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
-
-  if (!client) return <p>Loading gallery...</p>;
+  if (!client) return <p style={{ color: 'white' }}>Loading gallery...</p>;
 
   return (
     <motion.div className="client-gallery" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <h1>{client.name}'s Gallery</h1>
 
-      <p><strong>Selected:</strong> {selected.length}</p>
-
       <div className="thumbnail-grid">
-        {client.images.map((url, idx) => (
+        {client.images.map((src, idx) => (
           <div
             key={idx}
             className="thumbnail-wrapper"
-            onClick={() => toggleSelect(url)}
-            onDoubleClick={() => {
-              setEnlargedIndex(idx);
-              setEnlargedImage(url);
-            }}
+            onClick={() => setEnlargedIndex(idx)}
           >
             <img
-              src={url}
-              alt={`img-${idx}`}
+              src={src}
+              alt={`Image ${idx}`}
               className="thumbnail"
               style={{
-                border: selected.includes(url) ? '3px solid gold' : '1px solid #444',
-                boxShadow: selected.includes(url) ? '0 0 8px gold' : 'none'
+                width: '90px',
+                height: '90px',
+                objectFit: 'cover',
+                borderRadius: '6px',
+                border: selected.includes(src) ? '3px solid gold' : '1px solid #666',
+                boxShadow: selected.includes(src) ? '0 0 8px gold' : 'none'
               }}
             />
           </div>
         ))}
       </div>
 
-      <button className="submit-btn" onClick={submitSelections}>Submit Selections</button>
+      <button onClick={handleSubmit} style={{ marginTop: '1rem' }}>
+        Submit Selections
+      </button>
 
       <AnimatePresence>
-        {enlargedImage && (
+        {enlargedIndex !== null && (
           <motion.div
             className="overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setEnlargedImage(null)}
+            onClick={() => setEnlargedIndex(null)}
           >
             <motion.img
-              src={enlargedImage}
+              src={client.images[enlargedIndex]}
               alt="Enlarged"
               className="enlarged-img"
-              initial={{ scale: 0.8 }}
+              initial={{ scale: 0.7 }}
               animate={{ scale: 1 }}
-              exit={{ scale: 0.8 }}
+              exit={{ scale: 0.7 }}
+              onClick={(e) => e.stopPropagation()}
             />
-            <div className="nav-buttons">
-              <button onClick={(e) => {
+            <button className="back-btn" onClick={(e) => { e.stopPropagation(); setEnlargedIndex(null); }}>⬅ Back</button>
+            <button className="next-btn" onClick={(e) => { e.stopPropagation(); goToNext(); }}>➡</button>
+            <button className="prev-btn" onClick={(e) => { e.stopPropagation(); goToPrev(); }}>⬅</button>
+            <button
+              className="select-btn"
+              onClick={(e) => {
                 e.stopPropagation();
-                const prevIndex = (enlargedIndex - 1 + client.images.length) % client.images.length;
-                setEnlargedIndex(prevIndex);
-                setEnlargedImage(client.images[prevIndex]);
-              }}>◀</button>
-
-              <button onClick={(e) => {
-                e.stopPropagation();
-                toggleSelect(enlargedImage);
-              }}>
-                {selected.includes(enlargedImage) ? 'Deselect' : 'Select'}
-              </button>
-
-              <button onClick={(e) => {
-                e.stopPropagation();
-                const nextIndex = (enlargedIndex + 1) % client.images.length;
-                setEnlargedIndex(nextIndex);
-                setEnlargedImage(client.images[nextIndex]);
-              }}>▶</button>
-
-              <button onClick={(e) => {
-                e.stopPropagation();
-                setEnlargedImage(null);
-              }}>⬅ Back</button>
-            </div>
+                handleSelect(client.images[enlargedIndex]);
+              }}
+            >
+              {selected.includes(client.images[enlargedIndex]) ? 'Unselect' : 'Select'}
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
