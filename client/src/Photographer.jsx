@@ -18,6 +18,7 @@ const Photographer = () => {
   const [enlargedGroup, setEnlargedGroup] = useState([]);
   const [enlargedIndex, setEnlargedIndex] = useState(0);
   const [bulkDelete, setBulkDelete] = useState({});
+  const [showSelectedOnly, setShowSelectedOnly] = useState({});
 
   useEffect(() => {
     fetchClients();
@@ -47,21 +48,21 @@ const Photographer = () => {
     }
   };
 
+  const getClientSelections = (clientId) => {
+    const sel = selections.find(s => s.id === clientId);
+    return sel ? sel.selected : [];
+  };
+
   const addClient = async () => {
     if (!newClientId || !newClientName || !newPassword) {
       alert('Please fill in all fields.');
       return;
     }
-
     try {
       const res = await fetch(`${API}/clients`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: newClientId,
-          name: newClientName,
-          password: newPassword,
-        }),
+        body: JSON.stringify({ id: newClientId, name: newClientName, password: newPassword })
       });
 
       if (!res.ok) {
@@ -77,10 +78,6 @@ const Photographer = () => {
     } catch (err) {
       console.error('Error adding client:', err);
     }
-  };
-  const getClientSelections = (clientId) => {
-    const sel = selections.find(s => s.id === clientId);
-    return sel ? sel.selected : [];
   };
 
   const handleUpload = async (e, clientId) => {
@@ -121,7 +118,6 @@ const Photographer = () => {
 
     setUploadingId(null);
   };
-
   const handleImageRemove = async (clientId, imageURL) => {
     const client = clients.find(c => c.id === clientId);
     if (!client || !client.images) return;
@@ -161,6 +157,7 @@ const Photographer = () => {
       console.error('Bulk delete failed:', err);
     }
   };
+
   const exportSelections = async (clientId, clientName) => {
     const selected = getClientSelections(clientId);
     if (!selected.length) return;
@@ -212,6 +209,7 @@ const Photographer = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
+
   return (
     <motion.div className="photographer-dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <h1>Photographer Dashboard</h1>
@@ -228,6 +226,10 @@ const Photographer = () => {
         {clients.map((client) => {
           const selectedImages = getClientSelections(client.id).filter(img => client.images.includes(img));
           const markedForDelete = bulkDelete[client.id] || [];
+          const onlySelected = showSelectedOnly[client.id];
+          const visibleImages = onlySelected
+            ? client.images.filter(img => selectedImages.includes(img))
+            : client.images;
 
           return (
             <div key={client.id} className="client-card">
@@ -246,12 +248,21 @@ const Photographer = () => {
                 }));
               }} style={{ marginLeft: '0.5rem' }}>🗑️ Bulk Delete Mode</button>
 
-              {client.images && (
+              <button onClick={() => {
+                setShowSelectedOnly(prev => ({
+                  ...prev,
+                  [client.id]: !prev[client.id]
+                }));
+              }} style={{ marginLeft: '0.5rem' }}>
+                {onlySelected ? 'Show All' : 'Show Selected Only'}
+              </button>
+
+              {visibleImages && (
                 <div className="thumbnail-grid">
-                  {client.images.map((src, idx) => (
+                  {visibleImages.map((src, idx) => (
                     <div key={idx} className="thumbnail-wrapper" onDoubleClick={() => {
                       setEnlargedImage(src);
-                      setEnlargedGroup(client.images);
+                      setEnlargedGroup(visibleImages);
                       setEnlargedIndex(idx);
                     }}>
                       <img src={src} alt={`img-${idx}`} className="thumbnail" />
@@ -286,14 +297,25 @@ const Photographer = () => {
       <AnimatePresence>
         {enlargedImage && (
           <motion.div className="overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.img src={enlargedImage} alt="Enlarged" className="enlarged-img" initial={{ scale: 0.7 }} animate={{ scale: 1 }} exit={{ scale: 0.7 }} />
+            <motion.img
+              src={enlargedImage}
+              alt="Enlarged"
+              className="enlarged-img"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+            />
             <div className="nav-buttons">
               <button onClick={() => {
                 const newIndex = (enlargedIndex - 1 + enlargedGroup.length) % enlargedGroup.length;
                 setEnlargedIndex(newIndex);
                 setEnlargedImage(enlargedGroup[newIndex]);
               }}>◀</button>
-              <button onClick={() => setEnlargedImage(null)}>⬅ Back</button>
+              <button onClick={() => {
+                setEnlargedImage(null);
+                setEnlargedGroup([]);
+                setEnlargedIndex(0);
+              }}>⬅ Back</button>
               <button onClick={() => {
                 const newIndex = (enlargedIndex + 1) % enlargedGroup.length;
                 setEnlargedIndex(newIndex);
