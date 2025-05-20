@@ -1,0 +1,24 @@
+
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background-color: #0e1a2b;
+    color: #d4af37;
+}
+
+.header {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 2rem;
+}
+
+#gallery-container, #dashboard-container {
+    margin: 40px auto;
+    width: 90%;
+    max-width: 800px;
+    background: #111;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.4);
+    color: white;
+}
