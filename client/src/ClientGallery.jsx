@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import './App.css';
@@ -13,6 +13,8 @@ const ClientGallery = () => {
   const [selectedImages, setSelectedImages] = useState([]);
   const [error, setError] = useState('');
   const [enlargedImage, setEnlargedImage] = useState(null);
+  const [enlargedGroup, setEnlargedGroup] = useState([]);
+  const [enlargedIndex, setEnlargedIndex] = useState(0);
 
   const fetchClient = async () => {
     try {
@@ -44,41 +46,54 @@ const ClientGallery = () => {
         : [...prev, image]
     );
   };
+import React, { useEffect, useState, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import './App.css';
 
-  const handleSubmit = async () => {
+const API = 'https://bh-backend-clean.onrender.com';
+
+const ClientGallery = () => {
+  const { id } = useParams();
+  const [client, setClient] = useState(null);
+  const [password, setPassword] = useState('');
+  const [authenticated, setAuthenticated] = useState(false);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [error, setError] = useState('');
+  const [enlargedImage, setEnlargedImage] = useState(null);
+  const [enlargedGroup, setEnlargedGroup] = useState([]);
+  const [enlargedIndex, setEnlargedIndex] = useState(0);
+
+  const fetchClient = async () => {
     try {
-      await fetch(`${API}/select`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, selected: selectedImages })
-      });
-      alert('Your selection has been submitted!');
+      const res = await fetch(`${API}/clients`);
+      const data = await res.json();
+      const match = data.find(c => c.id === id);
+      setClient(match || null);
     } catch (err) {
-      console.error('Failed to submit selection:', err);
-      alert('There was an error. Please try again.');
+      console.error('Failed to fetch client:', err);
     }
   };
 
-  if (!client) {
-    return <div>Loading client...</div>;
-  }
+  useEffect(() => {
+    fetchClient();
+  }, [id]);
 
-  if (!authenticated) {
-    return (
-      <div className="login-screen">
-        <h2>Enter Password for {client.name}'s Gallery</h2>
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button onClick={handleLogin}>Enter</button>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-      </div>
+  const handleLogin = () => {
+    if (client && password === client.password) {
+      setAuthenticated(true);
+    } else {
+      setError('Incorrect password');
+    }
+  };
+
+  const toggleSelect = (image) => {
+    setSelectedImages(prev =>
+      prev.includes(image)
+        ? prev.filter(img => img !== image)
+        : [...prev, image]
     );
-  }
-
+  };
   return (
     <div className="client-gallery">
       <h2>{client.name}'s Gallery</h2>
@@ -86,25 +101,55 @@ const ClientGallery = () => {
       <p><strong>{selectedImages.length}</strong> selected</p>
 
       {client.images && client.images.length > 0 ? (
-        <div className="thumbnail-grid-large">
+        <div className="thumbnail-grid">
           {client.images.map((img, i) => (
-            <motion.div
+            <div
               key={i}
-              className={`thumbnail-wrapper ${selectedImages.includes(img) ? 'selected' : ''}`}
               onClick={() => toggleSelect(img)}
-              onDoubleClick={() => setEnlargedImage(img)}
-              whileHover={{ scale: 1.02 }}
-              layout
+              onDoubleClick={() => {
+                setEnlargedImage(img);
+                setEnlargedGroup(client.images);
+                setEnlargedIndex(i);
+              }}
+              style={{
+                border: selectedImages.includes(img) ? '3px solid limegreen' : '1px solid #ccc',
+                borderRadius: '6px',
+                display: 'inline-block',
+                margin: '5px',
+                cursor: 'pointer',
+                position: 'relative'
+              }}
             >
               <img
                 src={img}
                 alt={`Gallery ${i}`}
-                className="thumbnail-img-large"
+                style={{
+                  width: '100px',
+                  height: '100px',
+                  objectFit: 'cover',
+                  borderRadius: '4px'
+                }}
               />
               {selectedImages.includes(img) && (
-                <div className="checkmark">✓</div>
+                <div style={{
+                  position: 'absolute',
+                  top: 5,
+                  right: 5,
+                  backgroundColor: 'limegreen',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  borderRadius: '50%',
+                  width: 20,
+                  height: 20,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 14
+                }}>
+                  ✓
+                </div>
               )}
-            </motion.div>
+            </div>
           ))}
         </div>
       ) : (
@@ -121,30 +166,24 @@ const ClientGallery = () => {
 
       <AnimatePresence>
         {enlargedImage && (
-          <motion.div
-            className="overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setEnlargedImage(null)}
-          >
-            <motion.img
-              src={enlargedImage}
-              alt="Enlarged"
-              className="enlarged-img"
-              initial={{ scale: 0.7 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.7 }}
-            />
-            <button
-              className="back-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                setEnlargedImage(null);
-              }}
-            >
-              ⬅ Back
-            </button>
+          <motion.div className="overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.img src={enlargedImage} alt="enlarged" className="enlarged-img" initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }} />
+            <div className="nav-buttons">
+              <button onClick={() => {
+                const newIndex = (enlargedIndex - 1 + enlargedGroup.length) % enlargedGroup.length;
+                setEnlargedIndex(newIndex);
+                setEnlargedImage(enlargedGroup[newIndex]);
+              }}>◀</button>
+              <button onClick={() => toggleSelect(enlargedImage)}>
+                {selectedImages.includes(enlargedImage) ? 'Unselect' : 'Select'} This Image
+              </button>
+              <button onClick={() => setEnlargedImage(null)}>⬅ Back</button>
+              <button onClick={() => {
+                const newIndex = (enlargedIndex + 1) % enlargedGroup.length;
+                setEnlargedIndex(newIndex);
+                setEnlargedImage(enlargedGroup[newIndex]);
+              }}>▶</button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
