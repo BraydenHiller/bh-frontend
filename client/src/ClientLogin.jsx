@@ -1,28 +1,49 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './App.css';
+
+const API = 'https://bh-backend-clean.onrender.com';
 
 const ClientLogin = () => {
-  const [id, setId] = useState('');
+  const [clientId, setClientId] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    const res = await fetch('https://bh-backend-clean.onrender.com');
-    const clients = await res.json();
-    const match = clients.find(c => c.id === id && c.password === password);
-    if (match) {
-      navigate(`/gallery/${id}`);
-    } else {
-      alert('Invalid ID or password');
+    try {
+      const res = await fetch(`${API}/clients`);
+      const clients = await res.json();
+      const client = clients.find(c => c.id === clientId && c.password === password);
+
+      if (client) {
+        navigate(`/gallery/${client.id}`);
+      } else {
+        setError('Invalid ID or Password');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Server error. Try again later.');
     }
   };
 
   return (
-    <div className="client-login">
+    <div className="login-page">
       <h1>Client Login</h1>
-      <input placeholder="Client ID" value={id} onChange={(e) => setId(e.target.value)} />
-      <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <button onClick={handleLogin}>Enter Gallery</button>
+      <input
+        type="text"
+        placeholder="Client ID"
+        value={clientId}
+        onChange={(e) => setClientId(e.target.value)}
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <button onClick={handleLogin}>Login</button>
+      {error && <p className="error-msg">{error}</p>}
     </div>
   );
 };
