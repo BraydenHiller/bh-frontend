@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import './App.css';
@@ -226,30 +227,14 @@ const Photographer = () => {
               <button
                 onClick={() => exportSelections(client.id, client.name)}
                 disabled={selectedImages.length === 0}
-                style={{
-                  marginTop: '0.5rem',
-                  background: '#2d72d9',
-                  color: 'white',
-                  padding: '5px 12px',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  border: 'none'
-                }}
+                className="export-button"
               >
                 Export Selections
               </button>
 
               <button
                 onClick={() => handleDeleteClient(client.id)}
-                style={{
-                  marginLeft: '0.75rem',
-                  background: '#aa0000',
-                  color: 'white',
-                  padding: '5px 12px',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  border: 'none'
-                }}
+                className="delete-button"
               >
                 Delete Client
               </button>
@@ -259,40 +244,18 @@ const Photographer = () => {
                   {client.images.map((src, idx) => {
                     const isSelected = selectedImages.includes(src);
                     return (
-                      <div key={idx} style={{ position: 'relative', display: 'inline-block' }}>
+                      <div key={idx} className="thumbnail-container">
                         <img
                           src={src}
                           alt={`Gallery ${idx}`}
-                          className="thumbnail"
-                          style={{
-                            width: '80px',
-                            height: '80px',
-                            objectFit: 'cover',
-                            margin: '5px',
-                            border: isSelected ? '3px solid limegreen' : '1px solid #ccc',
-                            borderRadius: '6px'
-                          }}
+                          className={`thumbnail ${isSelected ? 'selected' : ''}`}
                         />
                         <button
                           onClick={() => {
                             const confirmDelete = window.confirm("Remove this image from the gallery?");
                             if (confirmDelete) handleImageRemove(client.id, src);
                           }}
-                          style={{
-                            position: 'absolute',
-                            top: 0,
-                            right: 0,
-                            background: 'rgba(255, 0, 0, 0.8)',
-                            border: 'none',
-                            color: 'white',
-                            borderRadius: '50%',
-                            width: '20px',
-                            height: '20px',
-                            fontSize: '14px',
-                            cursor: 'pointer',
-                            lineHeight: '18px',
-                            padding: 0
-                          }}
+                          className="remove-thumbnail"
                         >
                           ×
                         </button>
