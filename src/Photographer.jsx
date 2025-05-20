@@ -11,14 +11,18 @@ const Photographer = () => {
   const [newClientId, setNewClientId] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [uploadingId, setUploadingId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchClients = async () => {
     try {
+      setLoading(true);
       const res = await fetch(`${API}/clients`);
       const data = await res.json();
       setClients(data);
+      setLoading(false);
     } catch (err) {
       console.error('Failed to fetch clients:', err);
+      setLoading(false);
     }
   };
 
@@ -72,7 +76,6 @@ const Photographer = () => {
   const handleUpload = async (e, clientId) => {
     const files = Array.from(e.target.files);
     const uploadedURLs = [];
-
     setUploadingId(clientId);
 
     for (const file of files) {
@@ -137,35 +140,49 @@ const Photographer = () => {
     }
   };
 
+  const exportSelections = (clientId, clientName) => {
+    const selected = getClientSelections(clientId);
+    const blob = new Blob([selected.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = `${clientName}_selections.txt`;
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDeleteClient = async (clientId) => {
+    const confirm = window.confirm("Are you sure you want to delete this client?");
+    if (!confirm) return;
+
+    try {
+      await fetch(`${API}/clients/${clientId}`, {
+        method: 'DELETE'
+      });
+      fetchClients();
+    } catch (err) {
+      console.error("Failed to delete client:", err);
+    }
+  };
+
   return (
     <motion.div className="photographer-dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <h1>Photographer Dashboard</h1>
 
+      {loading && <p style={{ color: 'orange' }}>Loading clients...</p>}
+
       <div className="form-section">
         <h2>Create New Client Gallery</h2>
-        <input
-          placeholder="Client Name"
-          value={newClientName}
-          onChange={(e) => setNewClientName(e.target.value)}
-        />
-        <input
-          placeholder="Client ID"
-          value={newClientId}
-          onChange={(e) => setNewClientId(e.target.value)}
-        />
-        <input
-          placeholder="Client Password"
-          type="password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-        />
+        <input placeholder="Client Name" value={newClientName} onChange={(e) => setNewClientName(e.target.value)} />
+        <input placeholder="Client ID" value={newClientId} onChange={(e) => setNewClientId(e.target.value)} />
+        <input placeholder="Client Password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
         <button onClick={addClient}>Add Client</button>
       </div>
 
       <div className="client-list">
         <h2>Existing Clients</h2>
         {clients.map((client) => {
-          const selectedImages = getClientSelections(client.id);
+          const selectedImages = getClientSelections(client.id).filter(img => client.images.includes(img));
 
           return (
             <div key={client.id} className="client-card">
@@ -191,6 +208,37 @@ const Photographer = () => {
                 <br />
                 <strong>Selected:</strong> {selectedImages.length} images
               </div>
+
+              <button
+                onClick={() => exportSelections(client.id, client.name)}
+                disabled={selectedImages.length === 0}
+                style={{
+                  marginTop: '0.5rem',
+                  background: '#2d72d9',
+                  color: 'white',
+                  padding: '5px 12px',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  border: 'none'
+                }}
+              >
+                Export Selections
+              </button>
+
+              <button
+                onClick={() => handleDeleteClient(client.id)}
+                style={{
+                  marginLeft: '0.75rem',
+                  background: '#aa0000',
+                  color: 'white',
+                  padding: '5px 12px',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  border: 'none'
+                }}
+              >
+                Delete Client
+              </button>
 
               {client.images && client.images.length > 0 && (
                 <div className="thumbnail-grid">
