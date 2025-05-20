@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import './App.css';
 
-const API = 'https://bh-backend-clean.onrender.com'; // Replace with your actual backend URL
+const API = 'https://bh-backend-clean.onrender.com';
 
 const Photographer = () => {
   const [clients, setClients] = useState([]);
@@ -10,6 +10,7 @@ const Photographer = () => {
   const [newClientName, setNewClientName] = useState('');
   const [newClientId, setNewClientId] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [uploadingId, setUploadingId] = useState(null);
 
   const fetchClients = async () => {
     try {
@@ -72,6 +73,8 @@ const Photographer = () => {
     const files = Array.from(e.target.files);
     const uploadedURLs = [];
 
+    setUploadingId(clientId);
+
     for (const file of files) {
       const formData = new FormData();
       formData.append('file', file);
@@ -85,8 +88,6 @@ const Photographer = () => {
         });
 
         const data = await res.json();
-        console.log('Cloudinary response:', data);
-
         if (data.secure_url) {
           uploadedURLs.push(data.secure_url);
         }
@@ -108,6 +109,8 @@ const Photographer = () => {
         console.error('Failed to send to backend:', err);
       }
     }
+
+    setUploadingId(null);
   };
 
   const getClientSelections = (clientId) => {
@@ -163,6 +166,7 @@ const Photographer = () => {
         <h2>Existing Clients</h2>
         {clients.map((client) => {
           const selectedImages = getClientSelections(client.id);
+
           return (
             <div key={client.id} className="client-card">
               <p><strong>{client.name}</strong> (ID: {client.id})</p>
@@ -173,9 +177,14 @@ const Photographer = () => {
                 type="file"
                 multiple
                 accept="image/*"
+                disabled={uploadingId === client.id}
                 onChange={(e) => handleUpload(e, client.id)}
                 style={{ marginTop: '0.75rem' }}
               />
+
+              {uploadingId === client.id && (
+                <p style={{ color: 'orange' }}>Uploading...</p>
+              )}
 
               <div style={{ marginTop: '0.5rem' }}>
                 <strong>Gallery:</strong> {client.images?.length || 0} images
@@ -183,41 +192,51 @@ const Photographer = () => {
                 <strong>Selected:</strong> {selectedImages.length} images
               </div>
 
-              {selectedImages.length > 0 && (
+              {client.images && client.images.length > 0 && (
                 <div className="thumbnail-grid">
-                  {selectedImages.map((src, idx) => (
-                    <div key={idx} style={{ position: 'relative', display: 'inline-block' }}>
-                      <img
-                        src={src}
-                        alt={`Selected ${idx}`}
-                        className="thumbnail"
-                        style={{ width: '80px', height: '80px', objectFit: 'cover', margin: '5px' }}
-                      />
-                      <button
-                        onClick={() => {
-                          const confirmDelete = window.confirm("Remove this image from the gallery?");
-                          if (confirmDelete) handleImageRemove(client.id, src);
-                        }}
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          right: 0,
-                          background: 'rgba(255, 0, 0, 0.8)',
-                          border: 'none',
-                          color: 'white',
-                          borderRadius: '50%',
-                          width: '20px',
-                          height: '20px',
-                          fontSize: '14px',
-                          cursor: 'pointer',
-                          lineHeight: '18px',
-                          padding: 0
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+                  {client.images.map((src, idx) => {
+                    const isSelected = selectedImages.includes(src);
+                    return (
+                      <div key={idx} style={{ position: 'relative', display: 'inline-block' }}>
+                        <img
+                          src={src}
+                          alt={`Gallery ${idx}`}
+                          className="thumbnail"
+                          style={{
+                            width: '80px',
+                            height: '80px',
+                            objectFit: 'cover',
+                            margin: '5px',
+                            border: isSelected ? '3px solid limegreen' : '1px solid #ccc',
+                            borderRadius: '6px'
+                          }}
+                        />
+                        <button
+                          onClick={() => {
+                            const confirmDelete = window.confirm("Remove this image from the gallery?");
+                            if (confirmDelete) handleImageRemove(client.id, src);
+                          }}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            right: 0,
+                            background: 'rgba(255, 0, 0, 0.8)',
+                            border: 'none',
+                            color: 'white',
+                            borderRadius: '50%',
+                            width: '20px',
+                            height: '20px',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            lineHeight: '18px',
+                            padding: 0
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
