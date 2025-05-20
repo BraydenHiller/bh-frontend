@@ -68,49 +68,50 @@ const Photographer = () => {
     }
   };
 
-  const handleUpload = async (e, clientId) => {
-    const files = Array.from(e.target.files);
-    const uploadedURLs = [];
+const handleUpload = async (e, clientId) => {
+  const files = Array.from(e.target.files);
+  const uploadedURLs = [];
 
-    for (const file of files) {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', 'unsigned-upload');
-      formData.append('cloud_name', 'dsgeprirb');
+  for (const file of files) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'unsigned-upload');
+    formData.append('cloud_name', 'dsgeprirb');
 
-      try {
-        const res = await fetch('https://api.cloudinary.com/v1_1/dsgeprirb/image/upload', {
-          method: 'POST',
-          body: formData
-        });
+    try {
+      const res = await fetch('https://api.cloudinary.com/v1_1/dsgeprirb/image/upload', {
+        method: 'POST',
+        body: formData
+      });
 
-        const data = await res.json();
-        console.log('Cloudinary response:', data);
+      const data = await res.json();
+      console.log('Cloudinary response:', data);
 
-        if (data.secure_url) {
-          uploadedURLs.push(data.secure_url);
-        }
-      } catch (err) {
-        console.error('Cloudinary upload error:', err);
+      if (data.secure_url) {
+        uploadedURLs.push(data.secure_url);
       }
+    } catch (err) {
+      console.error('Cloudinary upload error:', err);
     }
+  }
 
-    console.log('Final uploaded URLs:', uploadedURLs);
+  console.log('Final uploaded URLs:', uploadedURLs);
 
-    if (uploadedURLs.length > 0) {
-      try {
-        await fetch(`${API}/upload`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: clientId, images: uploadedURLs }),
-        });
+  if (uploadedURLs.length > 0) {
+    try {
+      await fetch(`${API}/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: clientId, images: uploadedURLs }),
+      });
 
-        fetchClients();
-      } catch (err) {
-        console.error('Failed to send to backend:', err);
-      }
+      fetchClients();
+    } catch (err) {
+      console.error('Failed to send to backend:', err);
     }
-  };
+  }
+};
+
 
   const getClientSelections = (clientId) => {
     const sel = selections.find(s => s.id === clientId);
