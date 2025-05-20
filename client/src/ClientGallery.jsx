@@ -13,15 +13,18 @@ const ClientGallery = () => {
 
   useEffect(() => {
     const fetchClient = async () => {
-      try {
-        const res = await fetch(`${API}/clients`);
-        const data = await res.json();
-        const match = data.find(c => c.id === clientId);
-        setClient(match || null);
-      } catch (err) {
-        console.error('Failed to fetch client:', err);
-      }
-    };
+  try {
+    const res = await fetch(`${API}/clients`);
+    const data = await res.json();
+    console.log('Fetched clients:', data);
+    const match = data.find(c => c.id === clientId);
+    console.log('Looking for ID:', clientId, 'Match:', match);
+    setClient(match);
+  } catch (err) {
+    console.error('Failed to fetch client:', err);
+  }
+};
+
 
     const fetchSelections = async () => {
       try {
