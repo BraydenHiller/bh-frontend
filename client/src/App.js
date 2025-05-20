@@ -15,7 +15,7 @@ const App = () => {
         <Route path="/login" element={<ClientLogin />} />
 
         {/* Client-specific gallery */}
-        <Route path="/gallery/:id" element={<ClientGallery />} />
+        <Route path="/gallery/:clientId" element={<ClientGallery />} />
       </Routes>
     </Router>
   );
