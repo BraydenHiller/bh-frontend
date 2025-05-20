@@ -78,7 +78,6 @@ const Photographer = () => {
       console.error('Error adding client:', err);
     }
   };
-
   const getClientSelections = (clientId) => {
     const sel = selections.find(s => s.id === clientId);
     return sel ? sel.selected : [];
@@ -162,7 +161,6 @@ const Photographer = () => {
       console.error('Bulk delete failed:', err);
     }
   };
-
   const exportSelections = async (clientId, clientName) => {
     const selected = getClientSelections(clientId);
     if (!selected.length) return;
@@ -214,7 +212,6 @@ const Photographer = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
-
   return (
     <motion.div className="photographer-dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <h1>Photographer Dashboard</h1>
