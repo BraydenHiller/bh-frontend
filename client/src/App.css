@@ -259,3 +259,20 @@ button:hover {
 }
 
 .enlarged-img {
+  max-width: 90%;
+  max-height: 80vh;
+  border-radius: 12px;
+  box-shadow: 0 0 25px #f5c518aa;
+  border: 2px solid #f5c518;
+}
+
+.back-btn {
+  margin-top: 1rem;
+  background: #f5c518;
+  color: #0d1117;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}

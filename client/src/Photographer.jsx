@@ -234,7 +234,12 @@ const Photographer = () => {
                   {client.images.map((src, idx) => {
                     const isSelected = selectedImages.includes(src);
                     return (
-                      <div key={idx} className="thumbnail-wrapper" onClick={() => setEnlargedImage(src)}>
+                      <div
+  key={idx}
+  className="thumbnail-wrapper"
+  onDoubleClick={() => setEnlargedImage(src)}
+>
+
                         <img
                           src={src}
                           alt={`Gallery ${idx}`}
