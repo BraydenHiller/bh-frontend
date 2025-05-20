@@ -138,3 +138,88 @@ button:hover {
   color: #ff4444;
   margin-top: 10px;
 }
+/* Enlarged client gallery styles (matches your dark + gold theme) */
+.thumbnail-grid-large {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.thumbnail-wrapper {
+  position: relative;
+  border: 3px solid transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.thumbnail-wrapper.selected {
+  border-color: #f5c518;
+  box-shadow: 0 0 12px #f5c51888;
+}
+
+.thumbnail-img-large {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.checkmark {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background-color: limegreen;
+  color: white;
+  font-weight: bold;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  z-index: 2;
+}
+
+/* Overlay to enlarge images */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(13, 17, 23, 0.96);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.enlarged-img {
+  max-width: 92%;
+  max-height: 82vh;
+  border-radius: 12px;
+  box-shadow: 0 0 25px #f5c518aa;
+  border: 2px solid #f5c518;
+}
+
+.back-btn {
+  margin-top: 1.5rem;
+  background: #f5c518;
+  color: #0d1117;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.back-btn:hover {
+  background-color: #d4aa00;
+}

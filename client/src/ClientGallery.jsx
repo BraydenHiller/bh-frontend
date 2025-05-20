@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import './App.css';
 
 const API = 'https://bh-backend-clean.onrender.com';
@@ -11,6 +12,7 @@ const ClientGallery = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
   const [error, setError] = useState('');
+  const [enlargedImage, setEnlargedImage] = useState(null);
 
   const fetchClient = async () => {
     try {
@@ -84,50 +86,25 @@ const ClientGallery = () => {
       <p><strong>{selectedImages.length}</strong> selected</p>
 
       {client.images && client.images.length > 0 ? (
-        <div className="thumbnail-grid">
+        <div className="thumbnail-grid-large">
           {client.images.map((img, i) => (
-            <div
+            <motion.div
               key={i}
+              className={`thumbnail-wrapper ${selectedImages.includes(img) ? 'selected' : ''}`}
               onClick={() => toggleSelect(img)}
-              style={{
-                border: selectedImages.includes(img) ? '3px solid limegreen' : '1px solid #ccc',
-                borderRadius: '6px',
-                display: 'inline-block',
-                margin: '5px',
-                cursor: 'pointer',
-                position: 'relative'
-              }}
+              onDoubleClick={() => setEnlargedImage(img)}
+              whileHover={{ scale: 1.02 }}
+              layout
             >
               <img
                 src={img}
                 alt={`Gallery ${i}`}
-                style={{
-                  width: '100px',
-                  height: '100px',
-                  objectFit: 'cover',
-                  borderRadius: '4px'
-                }}
+                className="thumbnail-img-large"
               />
               {selectedImages.includes(img) && (
-                <div style={{
-                  position: 'absolute',
-                  top: 5,
-                  right: 5,
-                  backgroundColor: 'limegreen',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  borderRadius: '50%',
-                  width: 20,
-                  height: 20,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 14
-                }}>
-                  ✓
-                </div>
+                <div className="checkmark">✓</div>
               )}
-            </div>
+            </motion.div>
           ))}
         </div>
       ) : (
@@ -141,6 +118,36 @@ const ClientGallery = () => {
       >
         Submit Selections
       </button>
+
+      <AnimatePresence>
+        {enlargedImage && (
+          <motion.div
+            className="overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setEnlargedImage(null)}
+          >
+            <motion.img
+              src={enlargedImage}
+              alt="Enlarged"
+              className="enlarged-img"
+              initial={{ scale: 0.7 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.7 }}
+            />
+            <button
+              className="back-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEnlargedImage(null);
+              }}
+            >
+              ⬅ Back
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
