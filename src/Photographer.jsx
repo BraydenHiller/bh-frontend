@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import './App.css';
 
-const API = 'https://bh-backend-clean.onrender.com'; // ✅ Replace with your actual backend URL
+const API = 'https://bh-backend-clean.onrender.com'; // Replace with your actual backend URL
 
 const Photographer = () => {
   const [clients, setClients] = useState([]);
@@ -68,54 +68,70 @@ const Photographer = () => {
     }
   };
 
-const handleUpload = async (e, clientId) => {
-  const files = Array.from(e.target.files);
-  const uploadedURLs = [];
+  const handleUpload = async (e, clientId) => {
+    const files = Array.from(e.target.files);
+    const uploadedURLs = [];
 
-  for (const file of files) {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'unsigned-upload');
-    formData.append('cloud_name', 'dsgeprirb');
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', 'unsigned-upload');
+      formData.append('cloud_name', 'dsgeprirb');
 
-    try {
-      const res = await fetch('https://api.cloudinary.com/v1_1/dsgeprirb/image/upload', {
-        method: 'POST',
-        body: formData
-      });
+      try {
+        const res = await fetch('https://api.cloudinary.com/v1_1/dsgeprirb/image/upload', {
+          method: 'POST',
+          body: formData
+        });
 
-      const data = await res.json();
-      console.log('Cloudinary response:', data);
+        const data = await res.json();
+        console.log('Cloudinary response:', data);
 
-      if (data.secure_url) {
-        uploadedURLs.push(data.secure_url);
+        if (data.secure_url) {
+          uploadedURLs.push(data.secure_url);
+        }
+      } catch (err) {
+        console.error('Cloudinary upload error:', err);
       }
-    } catch (err) {
-      console.error('Cloudinary upload error:', err);
     }
-  }
 
-  console.log('Final uploaded URLs:', uploadedURLs);
+    if (uploadedURLs.length > 0) {
+      try {
+        await fetch(`${API}/upload`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: clientId, images: uploadedURLs }),
+        });
 
-  if (uploadedURLs.length > 0) {
-    try {
-      await fetch(`${API}/upload`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: clientId, images: uploadedURLs }),
-      });
-
-      fetchClients();
-    } catch (err) {
-      console.error('Failed to send to backend:', err);
+        fetchClients();
+      } catch (err) {
+        console.error('Failed to send to backend:', err);
+      }
     }
-  }
-};
-
+  };
 
   const getClientSelections = (clientId) => {
     const sel = selections.find(s => s.id === clientId);
     return sel ? sel.selected : [];
+  };
+
+  const handleImageRemove = async (clientId, imageURL) => {
+    const client = clients.find(c => c.id === clientId);
+    if (!client || !client.images) return;
+
+    const updatedImages = client.images.filter(img => img !== imageURL);
+
+    try {
+      await fetch(`${API}/update-images`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: clientId, images: updatedImages })
+      });
+
+      fetchClients();
+    } catch (err) {
+      console.error('Failed to update images:', err);
+    }
   };
 
   return (
@@ -162,23 +178,48 @@ const handleUpload = async (e, clientId) => {
               />
 
               <div style={{ marginTop: '0.5rem' }}>
+                <strong>Gallery:</strong> {client.images?.length || 0} images
+                <br />
                 <strong>Selected:</strong> {selectedImages.length} images
               </div>
 
-              {client.images && client.images.length > 0 && (
+              {selectedImages.length > 0 && (
                 <div className="thumbnail-grid">
-                {client.images.map((src, i) => (
-                 <img
-                 src={src}
-                 alt={`preview-${i}`}
-                  key={i}
-                  className="thumbnail"
-                  style={{ width: '80px', height: '80px', objectFit: 'cover', margin: '5px' }}
-                 />
-               ))}
-              </div>
-            )}
-
+                  {selectedImages.map((src, idx) => (
+                    <div key={idx} style={{ position: 'relative', display: 'inline-block' }}>
+                      <img
+                        src={src}
+                        alt={`Selected ${idx}`}
+                        className="thumbnail"
+                        style={{ width: '80px', height: '80px', objectFit: 'cover', margin: '5px' }}
+                      />
+                      <button
+                        onClick={() => {
+                          const confirmDelete = window.confirm("Remove this image from the gallery?");
+                          if (confirmDelete) handleImageRemove(client.id, src);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          right: 0,
+                          background: 'rgba(255, 0, 0, 0.8)',
+                          border: 'none',
+                          color: 'white',
+                          borderRadius: '50%',
+                          width: '20px',
+                          height: '20px',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          lineHeight: '18px',
+                          padding: 0
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
