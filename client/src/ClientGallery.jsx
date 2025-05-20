@@ -17,7 +17,7 @@ const ClientGallery = () => {
         const res = await fetch(`${API}/clients`);
         const data = await res.json();
         const match = data.find(c => c.id === clientId);
-        setClient(match);
+        setClient(match || null);
       } catch (err) {
         console.error('Failed to fetch client:', err);
       }
@@ -58,14 +58,21 @@ const ClientGallery = () => {
   };
 
   const goToPrev = useCallback(() => {
-    setEnlargedIndex(prev => (prev === 0 ? client.images.length - 1 : prev - 1));
+    setEnlargedIndex(prev =>
+      prev === 0 ? client.images.length - 1 : prev - 1
+    );
   }, [client]);
 
   const goToNext = useCallback(() => {
-    setEnlargedIndex(prev => (prev === client.images.length - 1 ? 0 : prev + 1));
+    setEnlargedIndex(prev =>
+      prev === client.images.length - 1 ? 0 : prev + 1
+    );
   }, [client]);
 
   if (!client) return <p style={{ color: 'white' }}>Loading gallery...</p>;
+  if (!client.images || client.images.length === 0) {
+    return <p style={{ color: 'white' }}>No images found in this gallery.</p>;
+  }
 
   return (
     <motion.div className="client-gallery" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
