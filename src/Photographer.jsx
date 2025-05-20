@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import './App.css';
 
-const API = 'https://bh-backend-clean.onrender.com'; // 🔁 Replace with your actual backend URL
+const API = 'https://bh-backend-clean.onrender.com'; // ✅ Replace with your actual backend URL
 
 const Photographer = () => {
   const [clients, setClients] = useState([]);
@@ -37,7 +37,6 @@ const Photographer = () => {
   }, []);
 
   const addClient = async () => {
-    console.log("Adding client:", newClientName, newClientId, newPassword);
     if (!newClientId || !newClientName || !newPassword) {
       alert('Please fill in all fields.');
       return;
@@ -71,23 +70,51 @@ const Photographer = () => {
 
   const handleUpload = async (e, clientId) => {
     const files = Array.from(e.target.files);
-    const urls = files.map(file => URL.createObjectURL(file)); // Simulate uploads
+    const uploadedURLs = [];
 
-    try {
-      await fetch(`${API}/upload`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: clientId, images: urls }),
-      });
-      fetchClients();
-    } catch (err) {
-      console.error('Error uploading:', err);
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', 'unsigned-upload');
+      formData.append('cloud_name', 'dsgeprirb');
+
+      try {
+        const res = await fetch('https://api.cloudinary.com/v1_1/dsgeprirb/image/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        console.log('Cloudinary response:', data);
+
+        if (data.secure_url) {
+          uploadedURLs.push(data.secure_url);
+        }
+      } catch (err) {
+        console.error('Cloudinary upload error:', err);
+      }
+    }
+
+    console.log('Final uploaded URLs:', uploadedURLs);
+
+    if (uploadedURLs.length > 0) {
+      try {
+        await fetch(`${API}/upload`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: clientId, images: uploadedURLs }),
+        });
+
+        fetchClients();
+      } catch (err) {
+        console.error('Failed to send to backend:', err);
+      }
     }
   };
 
   const getClientSelections = (clientId) => {
     const sel = selections.find(s => s.id === clientId);
-    return sel ? sel.selected.length : 0;
+    return sel ? sel.selected : [];
   };
 
   return (
@@ -117,25 +144,42 @@ const Photographer = () => {
 
       <div className="client-list">
         <h2>Existing Clients</h2>
-        {clients.map((client) => (
-          <div key={client.id} className="client-card">
-            <p><strong>{client.name}</strong> (ID: {client.id})</p>
-            <p>Password: {client.password}</p>
-            <a href={`/gallery/${client.id}`} target="_blank" rel="noreferrer">View Gallery →</a>
+        {clients.map((client) => {
+          const selectedImages = getClientSelections(client.id);
+          return (
+            <div key={client.id} className="client-card">
+              <p><strong>{client.name}</strong> (ID: {client.id})</p>
+              <p>Password: {client.password}</p>
+              <a href={`/gallery/${client.id}`} target="_blank" rel="noreferrer">View Gallery →</a>
 
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={(e) => handleUpload(e, client.id)}
-              style={{ marginTop: '0.75rem' }}
-            />
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={(e) => handleUpload(e, client.id)}
+                style={{ marginTop: '0.75rem' }}
+              />
 
-            <div style={{ marginTop: '0.5rem' }}>
-              <strong>Selected:</strong> {getClientSelections(client.id)} images
+              <div style={{ marginTop: '0.5rem' }}>
+                <strong>Selected:</strong> {selectedImages.length} images
+              </div>
+
+              {selectedImages.length > 0 && (
+                <div className="thumbnail-grid">
+                  {selectedImages.map((img, idx) => (
+                    <img
+                      key={idx}
+                      src={img}
+                      alt="Selected"
+                      className="thumbnail"
+                      style={{ width: '80px', height: '80px', objectFit: 'cover', margin: '5px' }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </motion.div>
   );
