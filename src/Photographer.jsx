@@ -165,19 +165,20 @@ const handleUpload = async (e, clientId) => {
                 <strong>Selected:</strong> {selectedImages.length} images
               </div>
 
-              {selectedImages.length > 0 && (
+              {client.images && client.images.length > 0 && (
                 <div className="thumbnail-grid">
-                  {selectedImages.map((img, idx) => (
-                    <img
-                      key={idx}
-                      src={img}
-                      alt="Selected"
-                      className="thumbnail"
-                      style={{ width: '80px', height: '80px', objectFit: 'cover', margin: '5px' }}
-                    />
-                  ))}
-                </div>
-              )}
+                {client.images.map((src, i) => (
+                 <img
+                 src={src}
+                 alt={`preview-${i}`}
+                  key={i}
+                  className="thumbnail"
+                  style={{ width: '80px', height: '80px', objectFit: 'cover', margin: '5px' }}
+                 />
+               ))}
+              </div>
+            )}
+
             </div>
           );
         })}
