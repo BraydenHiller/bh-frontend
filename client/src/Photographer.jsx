@@ -1,232 +1,127 @@
-
-// Photographer.jsx - Complete functional component with slideshow, bulk delete, export, etc.
-import React, { useEffect, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
-const API = 'https://bh-backend-clean.onrender.com';
-
 const Photographer = () => {
-  const [clients, setClients] = useState([]);
-  const [selections, setSelections] = useState([]);
-  const [newClientName, setNewClientName] = useState('');
-  const [newClientId, setNewClientId] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [uploadingId, setUploadingId] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [clientData, setClientData] = useState({});
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedImages, setSelectedImages] = useState({});
   const [enlargedImage, setEnlargedImage] = useState(null);
-  const [enlargedIndex, setEnlargedIndex] = useState(0);
-  const [enlargedGroup, setEnlargedGroup] = useState([]);
-  const [bulkDelete, setBulkDelete] = useState({});
 
   useEffect(() => {
-    fetchClients();
-    fetchSelections();
+    fetch('/clients.json')
+      .then((res) => res.json())
+      .then((data) => setClientData(data))
+      .catch((err) => console.error('Failed to load client data:', err));
   }, []);
 
-  const fetchClients = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${API}/clients`);
-      const data = await res.json();
-      setClients(data);
-      setLoading(false);
-    } catch (err) {
-      console.error('Failed to fetch clients:', err);
-      setLoading(false);
-    }
+  const handleClientSelect = (client) => {
+    setSelectedClient(client);
   };
 
-  const fetchSelections = async () => {
-    try {
-      const res = await fetch(`${API}/selections`);
-      const data = await res.json();
-      setSelections(data);
-    } catch (err) {
-      console.error('Failed to fetch selections:', err);
-    }
-  };
-
-  const addClient = async () => {
-    if (!newClientId || !newClientName || !newPassword) {
-      alert('Please fill in all fields.');
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API}/clients`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: newClientId,
-          name: newClientName,
-          password: newPassword,
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        alert(err.error || 'Failed to add client.');
-        return;
-      }
-
-      setNewClientName('');
-      setNewClientId('');
-      setNewPassword('');
-      fetchClients();
-    } catch (err) {
-      console.error('Error adding client:', err);
-    }
-  };
-
-  const getClientSelections = (clientId) => {
-    const sel = selections.find(s => s.id === clientId);
-    return sel ? sel.selected : [];
-  };
-
-  const handleUpload = async (e, clientId) => {
-    const files = Array.from(e.target.files);
-    const uploadedURLs = [];
-    setUploadingId(clientId);
-
-    for (const file of files) {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', 'unsigned-upload');
-      formData.append('cloud_name', 'dsgeprirb');
-
-      try {
-        const res = await fetch('https://api.cloudinary.com/v1_1/dsgeprirb/image/upload', {
-          method: 'POST',
-          body: formData
-        });
-
-        const data = await res.json();
-        if (data.secure_url) {
-          uploadedURLs.push(data.secure_url);
-        }
-      } catch (err) {
-        console.error('Cloudinary upload error:', err);
-      }
-    }
-
-    if (uploadedURLs.length > 0) {
-      try {
-        await fetch(`${API}/upload`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: clientId, images: uploadedURLs }),
-        });
-
-        fetchClients();
-      } catch (err) {
-        console.error('Failed to send to backend:', err);
-      }
-    }
-
-    setUploadingId(null);
-  };
-
-  const handleImageRemove = async (clientId, imageURL) => {
-    const client = clients.find(c => c.id === clientId);
-    if (!client || !client.images) return;
-
-    const updatedImages = client.images.filter(img => img !== imageURL);
-
-    try {
-      await fetch(`${API}/update-images`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: clientId, images: updatedImages })
-      });
-
-      fetchClients();
-    } catch (err) {
-      console.error('Failed to update images:', err);
-    }
-  };
-
-  const handleBulkDelete = async (clientId) => {
-    const selectedToDelete = bulkDelete[clientId] || [];
-    if (!selectedToDelete.length) return;
-    const confirm = window.confirm(`Delete ${selectedToDelete.length} selected images?`);
-    if (!confirm) return;
-
-    const updatedImages = clients.find(c => c.id === clientId).images.filter(img => !selectedToDelete.includes(img));
-    try {
-      await fetch(`${API}/update-images`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: clientId, images: updatedImages })
-      });
-      setBulkDelete(prev => ({ ...prev, [clientId]: [] }));
-      fetchClients();
-    } catch (err) {
-      console.error('Bulk delete failed:', err);
-    }
-  };
-
-  const exportSelections = async (clientId, clientName) => {
-    const selected = getClientSelections(clientId);
-    if (!selected.length) return;
-
-    const zip = new JSZip();
-
-    for (let i = 0; i < selected.length; i++) {
-      const imageUrl = selected[i];
-      try {
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
-        const filename = `image-${i + 1}.jpg`;
-        zip.file(filename, blob);
-      } catch (err) {
-        console.error('Error downloading image:', imageUrl, err);
-      }
-    }
-
-    zip.generateAsync({ type: 'blob' }).then((zipFile) => {
-      saveAs(zipFile, `${clientName}_selections.zip`);
+  const handleImageClick = (client, image) => {
+    setSelectedImages((prev) => {
+      const current = prev[client] || [];
+      return {
+        ...prev,
+        [client]: current.includes(image)
+          ? current.filter((img) => img !== image)
+          : [...current, image],
+      };
     });
   };
 
-  const handleDeleteClient = async (clientId) => {
-    const confirm = window.confirm("Are you sure you want to delete this client?");
-    if (!confirm) return;
-
-    try {
-      await fetch(`${API}/clients/${clientId}`, {
-        method: 'DELETE'
-      });
-      fetchClients();
-    } catch (err) {
-      console.error("Failed to delete client:", err);
-    }
+  const handleEnlarge = (image) => {
+    setEnlargedImage(image);
   };
 
-  const handleKeyDown = useCallback((e) => {
-    if (!enlargedImage || enlargedGroup.length < 2) return;
-    if (e.key === 'ArrowLeft') {
-      setEnlargedIndex((prev) => (prev === 0 ? enlargedGroup.length - 1 : prev - 1));
-      setEnlargedImage(enlargedGroup[enlargedIndex === 0 ? enlargedGroup.length - 1 : enlargedIndex - 1]);
-    }
-    if (e.key === 'ArrowRight') {
-      setEnlargedIndex((prev) => (prev === enlargedGroup.length - 1 ? 0 : prev + 1));
-      setEnlargedImage(enlargedGroup[enlargedIndex === enlargedGroup.length - 1 ? 0 : enlargedIndex + 1]);
-    }
-  }, [enlargedImage, enlargedGroup, enlargedIndex]);
+  const handleShrink = () => {
+    setEnlargedImage(null);
+  };
 
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+  const handleBulkDelete = () => {
+    if (!selectedClient) return;
+    if (!window.confirm('Are you sure you want to delete all images for this client?')) return;
+
+    const updatedClientData = { ...clientData };
+    updatedClientData[selectedClient].images = [];
+    setClientData(updatedClientData);
+    setSelectedImages((prev) => ({ ...prev, [selectedClient]: [] }));
+  };
+
+  const addClient = () => {
+    const newClientName = prompt('Enter new client name:');
+    if (!newClientName) return;
+
+    const updatedClientData = {
+      ...clientData,
+      [newClientName]: { images: [] },
+    };
+
+    setClientData(updatedClientData);
+  };
 
   return (
-    <motion.div className="photographer-dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+    <div className="photographer-dashboard">
       <h1>Photographer Dashboard</h1>
-      {/* The rest of the JSX continues from here */}
-    </motion.div>
+
+      <div className="client-list">
+        <h2>Clients</h2>
+        <button onClick={addClient}>+ Add Client</button>
+        <ul>
+          {Object.keys(clientData).map((client) => (
+            <li
+              key={client}
+              onClick={() => handleClientSelect(client)}
+              className={client === selectedClient ? 'active' : ''}
+            >
+              {client}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {selectedClient && (
+        <div className="gallery">
+          <h2>{selectedClient}'s Gallery</h2>
+
+          {clientData[selectedClient]?.images?.length === 0 ? (
+            <p>No images uploaded yet.</p>
+          ) : (
+            <>
+              <div className="image-grid">
+                {clientData[selectedClient]?.images.map((img, i) => (
+                  <img
+                    key={i}
+                    src={img}
+                    alt={`client-${i}`}
+                    onDoubleClick={() => handleEnlarge(img)}
+                    className={
+                      selectedImages[selectedClient]?.includes(img)
+                        ? 'selected'
+                        : ''
+                    }
+                    onClick={() => handleImageClick(selectedClient, img)}
+                  />
+                ))}
+              </div>
+
+              <button onClick={handleBulkDelete} className="bulk-delete">
+                🗑️ Bulk Delete All
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {enlargedImage && (
+        <div className="overlay" onClick={handleShrink}>
+          <img src={enlargedImage} alt="Enlarged" className="enlarged" />
+          <button className="close-btn" onClick={handleShrink}>
+            ← Back
+          </button>
+        </div>
+      )}
+    </div>
   );
 };
 
