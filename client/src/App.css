@@ -344,14 +344,9 @@ button:hover {
 .nav-buttons button:hover {
   background: #d4aa00;
 }
-@keyframes pulse-gold {
-  0% { box-shadow: 0 0 6px gold; }
-  50% { box-shadow: 0 0 12px gold; }
-  100% { box-shadow: 0 0 6px gold; }
-}
-
 .selected-admin {
   border: 3px solid gold;
   border-radius: 6px;
-  animation: pulse-gold 2s infinite;
+  box-shadow: 0 0 10px gold;
 }
+
