@@ -24,10 +24,11 @@ const Landing = () => {
       <img src={logo} alt="Logo" className="landing-logo" />
 
       {!showPassword ? (
-        <>
-          <button onClick={() => navigate('/client-login')}>Client Login</button>
-          <button onClick={() => setShowPassword(true)}>Admin Login</button>
-        </>
+        <div className="button-group">
+  <button onClick={() => navigate('/client-login')}>Client Login</button>
+  <button onClick={() => setShowPassword(true)}>Admin Login</button>
+</div>
+
       ) : (
         <div className="admin-login">
           <input
