@@ -1,7 +1,10 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import './App.css';
+
 import Landing from './Landing';
 import Photographer from './Photographer';
-import ClientLogin from './ClientLogin'; // or whatever your login component is
+import ClientLogin from './ClientLogin';
 import ClientGallery from './ClientGallery';
 
 function App() {

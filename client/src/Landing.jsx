@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './App.css'; // Make sure your logo styles are here
-import logo from './assets/logo.png'; // Update path to your actual logo
+import './App.css';
+import logo from './assets/logo.png'; // 🔁 Replace with your actual logo path
 
 const Landing = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [passcode, setPasscode] = useState('');
   const navigate = useNavigate();
 
-  const correctPasscode = 'your-secret-pass'; // CHANGE THIS to your real password
+  const correctPasscode = 'your-secret-pass'; // 🔒 Replace with your admin password
 
   const handleAdminAccess = () => {
     if (passcode === correctPasscode) {

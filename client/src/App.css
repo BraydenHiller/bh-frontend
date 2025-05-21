@@ -349,4 +349,37 @@ button:hover {
   border-radius: 6px;
   box-shadow: 0 0 10px gold;
 }
+.landing-page {
+  text-align: center;
+  padding: 2rem;
+  background-color: #0c1b2c; /* Dark navy */
+  color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.landing-logo {
+  width: 200px;
+  margin: 1.5rem auto;
+}
+
+button {
+  margin: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  background-color: #c5a300; /* Dark gold */
+  color: black;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #e6c300;
+}
+
+.admin-login input {
+  padding: 0.5rem;
+  margin-top: 1rem;
+  font-size: 1rem;
+}
 
