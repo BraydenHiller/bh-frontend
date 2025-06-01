@@ -1,9 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/showcase", "destination": "/" },
-    { "source": "/edit-showcase", "destination": "/" },
-    { "source": "/photographer", "destination": "/" },
-    { "source": "/gallery/:id", "destination": "/" },
-    { "source": "/(.*)", "destination": "/" }
-  ]
-}
