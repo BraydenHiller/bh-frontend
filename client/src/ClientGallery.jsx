@@ -12,35 +12,36 @@ const ClientGallery = () => {
   const [enlargedIndex, setEnlargedIndex] = useState(null);
 
   useEffect(() => {
-    const fetchClient = async () => {
+    const fetchData = async () => {
       try {
         const res = await fetch(`${API}/clients`);
         const data = await res.json();
         const match = data.find(c => c.id === clientId);
-        setClient(match);
+        if (match) {
+          setClient(match);
+        } else {
+          console.warn('No client found with the given ID.');
+        }
       } catch (err) {
-        console.error('Failed to fetch client:', err);
+        console.error('Failed to fetch client data:', err);
       }
-    };
 
-    const fetchSelections = async () => {
       try {
         const res = await fetch(`${API}/selections`);
         const data = await res.json();
-        const match = data.find(s => s.id === clientId);
-        setSelected(match?.selected || []);
+        const selectionMatch = data.find(s => s.id === clientId);
+        setSelected(selectionMatch?.selected || []);
       } catch (err) {
         console.error('Failed to fetch selections:', err);
       }
     };
 
-    fetchClient();
-    fetchSelections();
+    fetchData();
   }, [clientId]);
 
   const handleSelect = (img) => {
-    setSelected(prev =>
-      prev.includes(img) ? prev.filter(i => i !== img) : [...prev, img]
+    setSelected((prev) =>
+      prev.includes(img) ? prev.filter((i) => i !== img) : [...prev, img]
     );
   };
 
@@ -49,7 +50,7 @@ const ClientGallery = () => {
       await fetch(`${API}/selections`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: clientId, selected })
+        body: JSON.stringify({ id: clientId, selected }),
       });
       alert('Selections submitted!');
     } catch (err) {
@@ -58,17 +59,28 @@ const ClientGallery = () => {
   };
 
   const goToPrev = useCallback(() => {
-    setEnlargedIndex(prev => (prev === 0 ? client.images.length - 1 : prev - 1));
+    if (client && client.images.length > 0) {
+      setEnlargedIndex((prev) => (prev === 0 ? client.images.length - 1 : prev - 1));
+    }
   }, [client]);
 
   const goToNext = useCallback(() => {
-    setEnlargedIndex(prev => (prev === client.images.length - 1 ? 0 : prev + 1));
+    if (client && client.images.length > 0) {
+      setEnlargedIndex((prev) => (prev === client.images.length - 1 ? 0 : prev + 1));
+    }
   }, [client]);
 
-  if (!client) return <p style={{ color: 'white', textAlign: 'center' }}>Loading gallery...</p>;
+  if (!client) {
+    return <p style={{ color: 'white', textAlign: 'center' }}>Loading gallery...</p>;
+  }
 
   return (
-    <motion.div className="client-gallery" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center' }}>
+    <motion.div
+      className="client-gallery"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      style={{ textAlign: 'center' }}
+    >
       <h1 style={{ color: 'white' }}>{client.name}'s Gallery</h1>
 
       <div className="thumbnail-grid" style={{ justifyContent: 'center' }}>
@@ -87,8 +99,10 @@ const ClientGallery = () => {
                 height: '90px',
                 objectFit: 'cover',
                 borderRadius: '6px',
-                border: selected.includes(src) ? '3px solid #bfa100' : '1px solid #666',
-                boxShadow: selected.includes(src) ? '0 0 8px #bfa100' : 'none'
+                border: selected.includes(src)
+                  ? '3px solid #bfa100'
+                  : '1px solid #666',
+                boxShadow: selected.includes(src) ? '0 0 8px #bfa100' : 'none',
               }}
             />
           </div>
@@ -100,7 +114,7 @@ const ClientGallery = () => {
       </button>
 
       <AnimatePresence>
-        {enlargedIndex !== null && (
+        {enlargedIndex !== null && client.images[enlargedIndex] && (
           <motion.div
             className="overlay"
             initial={{ opacity: 0 }}
