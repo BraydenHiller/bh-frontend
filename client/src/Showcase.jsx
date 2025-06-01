@@ -13,8 +13,8 @@ const Showcase = () => {
     const fetchShowcase = async () => {
       try {
         const res = await fetch(`${API}/showcase`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
-        console.log('Fetched showcase:', data);
         setElements(data.elements || []);
         setBackgroundColor(data.backgroundColor || '#fff');
         setBackgroundImage(data.backgroundImage || null);
@@ -33,21 +33,21 @@ const Showcase = () => {
         backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
         minHeight: '100vh',
         position: 'relative',
+        overflow: 'auto',
       }}
     >
-      {elements.map(el => (
+      {elements.map((el) => (
         <Rnd
           key={el.id}
           size={{ width: el.width, height: el.height }}
           position={{ x: el.x, y: el.y }}
+          disableDragging
+          enableResizing={false}
           style={{
             zIndex: el.zIndex,
             transform: `rotate(${el.rotation}deg)`,
-            border: el.locked ? '2px solid red' : 'none',
-            pointerEvents: 'none',
+            pointerEvents: 'none', // Disable interactions on showcase
           }}
-          enableResizing={false}
-          disableDragging={true}
         >
           {el.type === 'text' && (
             <div
@@ -56,29 +56,44 @@ const Showcase = () => {
                 color: el.color,
                 backgroundColor: el.backgroundColor,
                 fontFamily: el.fontFamily,
-                fontWeight: el.bold ? 'bold' : 'normal',
-                fontStyle: el.italic ? 'italic' : 'normal',
-                textDecoration: el.underline ? 'underline' : 'none',
+                textDecoration: el.textDecoration,
+                fontStyle: el.fontStyle,
+                fontWeight: el.fontWeight,
+                textAlign: el.textAlign,
+                whiteSpace: 'pre-wrap',
                 width: '100%',
                 height: '100%',
+                overflow: 'hidden',
               }}
             >
               {el.content}
             </div>
           )}
           {el.type === 'image' && (
-            <img src={el.src || 'https://via.placeholder.com/150'} alt="" style={{ width: '100%', height: '100%' }} />
+            <img
+              src={el.src}
+              alt=""
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                border: el.border,
+                boxShadow: el.boxShadow,
+                borderRadius: el.borderRadius,
+              }}
+            />
           )}
           {el.type === 'button' && (
-            <a href={el.link || '#'} target="_blank" rel="noopener noreferrer" style={{ display: 'block', width: '100%', height: '100%' }}>
+            <a href={el.link} target="_blank" rel="noopener noreferrer">
               <button
                 style={{
+                  width: '100%',
+                  height: '100%',
                   fontSize: el.fontSize,
                   backgroundColor: el.backgroundColor,
                   color: el.color,
-                  fontFamily: el.fontFamily,
-                  width: '100%',
-                  height: '100%',
+                  border: el.border,
+                  borderRadius: el.borderRadius,
                 }}
               >
                 {el.text}
