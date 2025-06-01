@@ -13,7 +13,6 @@ const Showcase = () => {
     const fetchShowcase = async () => {
       try {
         const res = await fetch(`${API}/showcase`);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setElements(data.elements || []);
         setBackgroundColor(data.backgroundColor || '#fff');
@@ -55,13 +54,7 @@ const Showcase = () => {
               {el.content}
             </div>
           )}
-          {el.type === 'image' && (
-            <img
-              src={el.src}
-              alt=""
-              style={{ width: '100%', height: '100%' }}
-            />
-          )}
+          {el.type === 'image' && <img src={el.src} alt="" style={{ width: '100%', height: '100%' }} />}
           {el.type === 'button' && (
             <a href={el.link} target="_blank" rel="noopener noreferrer">
               <button>{el.text}</button>
