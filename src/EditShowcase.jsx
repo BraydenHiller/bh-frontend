@@ -28,13 +28,17 @@ const EditShowcase = () => {
   const [history, setHistory] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
 
-  useEffect(() => {
-    fetch(`${API}/showcase`).then(res => res.json()).then(data => {
+ useEffect(() => {
+  fetch(`${API}/showcase`)
+    .then(res => res.json())
+    .then(data => {
       setElements(data.elements || []);
       setBackgroundColor(data.backgroundColor || '#fff');
       setBackgroundImage(data.backgroundImage || null);
-    });
-  }, []);
+    })
+    .catch(err => console.error('Error fetching showcase:', err));
+}, []);
+
 
   const saveLayout = () => {
     fetch(`${API}/showcase`, {
