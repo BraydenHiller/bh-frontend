@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Removed useCallback
+import React, { useEffect, useState } from 'react';
 import { Rnd } from 'react-rnd';
 import './EditShowcase.css';
 
@@ -14,6 +14,7 @@ const defaultElement = (type) => ({
   zIndex: 1,
   rotation: 0,
   locked: false,
+  group: null,
   ...(type === 'text' && { content: 'Edit text', fontSize: '16px', color: '#000', backgroundColor: 'transparent', fontFamily: 'Arial' }),
   ...(type === 'image' && { src: '', border: 'none', boxShadow: 'none' }),
   ...(type === 'button' && { text: 'Click Me', link: '' }),
@@ -23,19 +24,19 @@ const EditShowcase = () => {
   const [elements, setElements] = useState([]);
   const [backgroundColor, setBackgroundColor] = useState('#fff');
   const [backgroundImage, setBackgroundImage] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [redoStack, setRedoStack] = useState([]);
 
   useEffect(() => {
     const fetchShowcase = async () => {
       try {
         const res = await fetch(`${API}/showcase`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
+        console.log('EditShowcase data fetched:', data); // Debug log
         setElements(data.elements || []);
         setBackgroundColor(data.backgroundColor || '#fff');
         setBackgroundImage(data.backgroundImage || null);
       } catch (err) {
-        console.error('Error fetching showcase:', err);
+        console.error('Error fetching edit showcase:', err);
       }
     };
     fetchShowcase();
@@ -54,66 +55,60 @@ const EditShowcase = () => {
     }
   };
 
-  const addElement = (type) => {
-    const newEl = defaultElement(type);
-    setElements((prev) => [...prev, newEl]);
-    setHistory((prev) => [...prev, prev]);
-    setRedoStack([]);
-  };
-
-  const updateElement = (id, changes) => {
-    setElements((prev) => prev.map((el) => (el.id === id ? { ...el, ...changes } : el)));
-  };
-
-  const deleteElement = (id) => {
-    setElements((prev) => prev.filter((el) => el.id !== id));
-  };
-
-  const bringForward = (id) => updateElement(id, { zIndex: (elements.find((e) => e.id === id)?.zIndex || 1) + 1 });
-  const sendBackward = (id) => updateElement(id, { zIndex: (elements.find((e) => e.id === id)?.zIndex || 1) - 1 });
-  const rotate = (id, angle) => updateElement(id, { rotation: angle });
-  const lockToggle = (id) => updateElement(id, { locked: !elements.find((e) => e.id === id)?.locked });
-
-  const undo = () => {
-    if (!history.length) return;
-    const prevState = history[history.length - 1];
-    setRedoStack((stack) => [elements, ...stack]);
-    setElements(prevState);
-    setHistory((stack) => stack.slice(0, -1));
-  };
-
-  const redo = () => {
-    if (!redoStack.length) return;
-    const nextState = redoStack[0];
-    setHistory((stack) => [...stack, elements]);
-    setElements(nextState);
-    setRedoStack((stack) => stack.slice(1));
-  };
-
-  const uploadImage = async (e, id) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'unsigned-upload');
-    formData.append('cloud_name', 'dsgeprirb');
-    try {
-      const res = await fetch('https://api.cloudinary.com/v1_1/dsgeprirb/image/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.secure_url) updateElement(id, { src: data.secure_url });
-    } catch (err) {
-      console.error('Error uploading image:', err);
-    }
-  };
-
   return (
-    // unchanged body of component...
-    <div> {/* paste rest of your unchanged render here, only fixed unused vars */}
+    <div
+      className="edit-showcase"
+      style={{
+        backgroundColor,
+        backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
+        minHeight: '200vh',
+      }}
+    >
+      <div className="toolbar">
+        <button onClick={() => setElements((prev) => [...prev, defaultElement('text')])}>Add Text</button>
+        <button onClick={() => setElements((prev) => [...prev, defaultElement('image')])}>Add Image</button>
+        <button onClick={() => setElements((prev) => [...prev, defaultElement('button')])}>Add Button</button>
+        <input type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} />
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onloadend = () => setBackgroundImage(reader.result);
+            reader.readAsDataURL(file);
+          }}
+        />
+        <button onClick={saveLayout}>Save</button>
+      </div>
+
+      {elements.map((el) => (
+        <Rnd
+          key={el.id}
+          size={{ width: el.width, height: el.height }}
+          position={{ x: el.x, y: el.y }}
+          onDragStop={(e, d) => !el.locked && setElements((prev) => prev.map((el2) => el2.id === el.id ? { ...el2, x: d.x, y: d.y } : el2))}
+          onResizeStop={(e, direction, ref, delta, position) =>
+            !el.locked && setElements((prev) => prev.map((el2) => el2.id === el.id
+              ? { ...el2, width: ref.offsetWidth, height: ref.offsetHeight, ...position }
+              : el2))
+          }
+          style={{ zIndex: el.zIndex, transform: `rotate(${el.rotation}deg)` }}
+          bounds="parent"
+        >
+          {el.type === 'text' && <div>{el.content}</div>}
+          {el.type === 'image' && (
+            <div>
+              {el.src ? <img src={el.src} alt="" style={{ width: '100%', height: '100%' }} /> : <span>No Image</span>}
+            </div>
+          )}
+          {el.type === 'button' && <button>{el.text}</button>}
+        </Rnd>
+      ))}
     </div>
   );
 };
 
 export default EditShowcase;
+ 
