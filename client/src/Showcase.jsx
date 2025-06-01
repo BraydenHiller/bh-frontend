@@ -14,6 +14,7 @@ const Showcase = () => {
       try {
         const res = await fetch(`${API}/showcase`);
         const data = await res.json();
+        console.log('Fetched showcase:', data);
         setElements(data.elements || []);
         setBackgroundColor(data.backgroundColor || '#fff');
         setBackgroundImage(data.backgroundImage || null);
@@ -31,14 +32,20 @@ const Showcase = () => {
         backgroundColor,
         backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
         minHeight: '100vh',
+        position: 'relative',
       }}
     >
-      {elements.map((el) => (
+      {elements.map(el => (
         <Rnd
           key={el.id}
           size={{ width: el.width, height: el.height }}
           position={{ x: el.x, y: el.y }}
-          style={{ zIndex: el.zIndex, transform: `rotate(${el.rotation}deg)` }}
+          style={{
+            zIndex: el.zIndex,
+            transform: `rotate(${el.rotation}deg)`,
+            border: el.locked ? '2px solid red' : 'none',
+            pointerEvents: 'none',
+          }}
           enableResizing={false}
           disableDragging={true}
         >
@@ -49,15 +56,33 @@ const Showcase = () => {
                 color: el.color,
                 backgroundColor: el.backgroundColor,
                 fontFamily: el.fontFamily,
+                fontWeight: el.bold ? 'bold' : 'normal',
+                fontStyle: el.italic ? 'italic' : 'normal',
+                textDecoration: el.underline ? 'underline' : 'none',
+                width: '100%',
+                height: '100%',
               }}
             >
               {el.content}
             </div>
           )}
-          {el.type === 'image' && <img src={el.src} alt="" style={{ width: '100%', height: '100%' }} />}
+          {el.type === 'image' && (
+            <img src={el.src || 'https://via.placeholder.com/150'} alt="" style={{ width: '100%', height: '100%' }} />
+          )}
           {el.type === 'button' && (
-            <a href={el.link} target="_blank" rel="noopener noreferrer">
-              <button>{el.text}</button>
+            <a href={el.link || '#'} target="_blank" rel="noopener noreferrer" style={{ display: 'block', width: '100%', height: '100%' }}>
+              <button
+                style={{
+                  fontSize: el.fontSize,
+                  backgroundColor: el.backgroundColor,
+                  color: el.color,
+                  fontFamily: el.fontFamily,
+                  width: '100%',
+                  height: '100%',
+                }}
+              >
+                {el.text}
+              </button>
             </a>
           )}
         </Rnd>
