@@ -1,5 +1,5 @@
 // Full EditShowcase.jsx with complete customization and backend save
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Rnd } from 'react-rnd';
 import './EditShowcase.css';
 
