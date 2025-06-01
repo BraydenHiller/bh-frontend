@@ -15,7 +15,6 @@ const Showcase = () => {
         const res = await fetch(`${API}/showcase`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
-        console.log('Showcase data fetched:', data); // Debug log
         setElements(data.elements || []);
         setBackgroundColor(data.backgroundColor || '#fff');
         setBackgroundImage(data.backgroundImage || null);
@@ -57,7 +56,11 @@ const Showcase = () => {
             </div>
           )}
           {el.type === 'image' && (
-            <img src={el.src} alt="" style={{ width: '100%', height: '100%' }} />
+            <img
+              src={el.src}
+              alt=""
+              style={{ width: '100%', height: '100%' }}
+            />
           )}
           {el.type === 'button' && (
             <a href={el.link} target="_blank" rel="noopener noreferrer">
