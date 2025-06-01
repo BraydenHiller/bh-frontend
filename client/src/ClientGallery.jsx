@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import './App.css';
@@ -12,7 +12,7 @@ const ClientGallery = () => {
   const [enlargedIndex, setEnlargedIndex] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchClientData = async () => {
       try {
         const res = await fetch(`${API}/clients`);
         const data = await res.json();
@@ -25,7 +25,9 @@ const ClientGallery = () => {
       } catch (err) {
         console.error('Failed to fetch client data:', err);
       }
+    };
 
+    const fetchSelections = async () => {
       try {
         const res = await fetch(`${API}/selections`);
         const data = await res.json();
@@ -36,12 +38,13 @@ const ClientGallery = () => {
       }
     };
 
-    fetchData();
+    fetchClientData();
+    fetchSelections();
   }, [clientId]);
 
   const handleSelect = (img) => {
     setSelected((prev) =>
-      prev.includes(img) ? prev.filter((i) => i !== img) : [...prev, img]
+      prev.includes(img) ? prev.filter(i => i !== img) : [...prev, img]
     );
   };
 
@@ -58,17 +61,17 @@ const ClientGallery = () => {
     }
   };
 
-  const goToPrev = useCallback(() => {
+  const goToPrev = () => {
     if (client && client.images.length > 0) {
       setEnlargedIndex((prev) => (prev === 0 ? client.images.length - 1 : prev - 1));
     }
-  }, [client]);
+  };
 
-  const goToNext = useCallback(() => {
+  const goToNext = () => {
     if (client && client.images.length > 0) {
       setEnlargedIndex((prev) => (prev === client.images.length - 1 ? 0 : prev + 1));
     }
-  }, [client]);
+  };
 
   if (!client) {
     return <p style={{ color: 'white', textAlign: 'center' }}>Loading gallery...</p>;
@@ -92,7 +95,7 @@ const ClientGallery = () => {
           >
             <img
               src={src}
-              alt={`Image ${idx}`}
+              alt=""
               className="thumbnail"
               style={{
                 width: '90px',
@@ -124,7 +127,7 @@ const ClientGallery = () => {
           >
             <motion.img
               src={client.images[enlargedIndex]}
-              alt="Enlarged"
+              alt=""
               className="enlarged-img"
               initial={{ scale: 0.7 }}
               animate={{ scale: 1 }}
