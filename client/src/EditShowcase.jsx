@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';  // Removed useCallback
 import { Rnd } from 'react-rnd';
 import './EditShowcase.css';
 
@@ -14,7 +14,6 @@ const defaultElement = (type) => ({
   zIndex: 1,
   rotation: 0,
   locked: false,
-  group: null,
   ...(type === 'text' && { content: 'Edit text', fontSize: '16px', color: '#000', backgroundColor: 'transparent', fontFamily: 'Arial' }),
   ...(type === 'image' && { src: '', border: 'none', boxShadow: 'none' }),
   ...(type === 'button' && { text: 'Click Me', link: '' }),
@@ -39,7 +38,6 @@ const EditShowcase = () => {
         console.error('Error fetching showcase:', err);
       }
     };
-
     fetchShowcase();
   }, []);
 
@@ -99,7 +97,6 @@ const EditShowcase = () => {
     formData.append('file', file);
     formData.append('upload_preset', 'unsigned-upload');
     formData.append('cloud_name', 'dsgeprirb');
-
     try {
       const res = await fetch('https://api.cloudinary.com/v1_1/dsgeprirb/image/upload', {
         method: 'POST',
@@ -126,17 +123,13 @@ const EditShowcase = () => {
         <button onClick={() => addElement('image')}>Add Image</button>
         <button onClick={() => addElement('button')}>Add Button</button>
         <input type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onloadend = () => setBackgroundImage(reader.result);
-            reader.readAsDataURL(file);
-          }}
-        />
+        <input type="file" accept="image/*" onChange={(e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onloadend = () => setBackgroundImage(reader.result);
+          reader.readAsDataURL(file);
+        }} />
         <button onClick={saveLayout}>Save</button>
         <button onClick={undo}>Undo</button>
         <button onClick={redo}>Redo</button>
@@ -161,29 +154,11 @@ const EditShowcase = () => {
         >
           {el.type === 'text' && (
             <div style={{ fontSize: el.fontSize, color: el.color, backgroundColor: el.backgroundColor, fontFamily: el.fontFamily }}>
-              <textarea
-                value={el.content}
-                onChange={(e) => updateElement(el.id, { content: e.target.value })}
-              />
-              <input
-                type="number"
-                value={parseInt(el.fontSize)}
-                onChange={(e) => updateElement(el.id, { fontSize: `${e.target.value}px` })}
-              />
-              <input
-                type="color"
-                value={el.color}
-                onChange={(e) => updateElement(el.id, { color: e.target.value })}
-              />
-              <input
-                type="color"
-                value={el.backgroundColor}
-                onChange={(e) => updateElement(el.id, { backgroundColor: e.target.value })}
-              />
-              <select
-                value={el.fontFamily}
-                onChange={(e) => updateElement(el.id, { fontFamily: e.target.value })}
-              >
+              <textarea value={el.content} onChange={(e) => updateElement(el.id, { content: e.target.value })} />
+              <input type="number" value={parseInt(el.fontSize)} onChange={(e) => updateElement(el.id, { fontSize: `${e.target.value}px` })} />
+              <input type="color" value={el.color} onChange={(e) => updateElement(el.id, { color: e.target.value })} />
+              <input type="color" value={el.backgroundColor} onChange={(e) => updateElement(el.id, { backgroundColor: e.target.value })} />
+              <select value={el.fontFamily} onChange={(e) => updateElement(el.id, { fontFamily: e.target.value })}>
                 <option>Arial</option>
                 <option>Times</option>
                 <option>Courier</option>
@@ -211,14 +186,8 @@ const EditShowcase = () => {
           )}
           {el.type === 'button' && (
             <div>
-              <input
-                value={el.text}
-                onChange={(e) => updateElement(el.id, { text: e.target.value })}
-              />
-              <input
-                value={el.link}
-                onChange={(e) => updateElement(el.id, { link: e.target.value })}
-              />
+              <input value={el.text} onChange={(e) => updateElement(el.id, { text: e.target.value })} />
+              <input value={el.link} onChange={(e) => updateElement(el.id, { link: e.target.value })} />
               <button onClick={() => bringForward(el.id)}>Bring Forward</button>
               <button onClick={() => sendBackward(el.id)}>Send Back</button>
               <button onClick={() => rotate(el.id, (el.rotation || 0) + 15)}>Rotate</button>
