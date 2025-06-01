@@ -24,7 +24,6 @@ const EditShowcase = () => {
   const [elements, setElements] = useState([]);
   const [backgroundColor, setBackgroundColor] = useState('#fff');
   const [backgroundImage, setBackgroundImage] = useState(null);
-  const [selectedElement, setSelectedElement] = useState(null);
 
   useEffect(() => {
     const fetchDraft = async () => {
@@ -98,7 +97,6 @@ const EditShowcase = () => {
           onResizeStop={(e, direction, ref, delta, pos) => !el.locked && updateElement(el.id, { width: ref.offsetWidth, height: ref.offsetHeight, ...pos })}
           style={{ zIndex: el.zIndex, transform: `rotate(${el.rotation}deg)` }}
           bounds="parent"
-          onClick={() => setSelectedElement(el)}
         >
           {el.type === 'text' && (
             <div
