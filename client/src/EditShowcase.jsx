@@ -1,119 +1,121 @@
-import React, { useState, useEffect } from 'react';
-import { Rnd } from 'react-rnd';
-import './EditShowcase.css';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import './EditShowcase.css';
 
 const API = 'https://bh-backend-clean.onrender.com';
 
-const EditShowcase = () => {
+export default function EditShowcase() {
   const [elements, setElements] = useState([]);
+  const [backgroundColor, setBackgroundColor] = useState('#ffffff');
+  const [backgroundImage, setBackgroundImage] = useState(null);
 
   useEffect(() => {
-    fetchLayout();
+    axios.get(`${API}/showcase`).then(res => {
+      const { elements, backgroundColor, backgroundImage } = res.data;
+      setElements(elements || []);
+      setBackgroundColor(backgroundColor || '#ffffff');
+      setBackgroundImage(backgroundImage || null);
+    });
   }, []);
 
-  const fetchLayout = async () => {
-    const res = await axios.get(`${API}/showcase`);
-    if (res.data) setElements(res.data.elements || []);
-  };
+  useEffect(() => {
+    const layout = { elements, backgroundColor, backgroundImage };
+    axios.post(`${API}/showcase`, { layout });
+  }, [elements, backgroundColor, backgroundImage]);
 
   const addText = () => {
-    const newText = {
+    setElements(prev => [...prev, {
       id: Date.now(),
       type: 'text',
-      content: 'Edit Me',
-      x: 100,
-      y: 100,
-      width: 200,
-      height: 50,
-    };
-    setElements([...elements, newText]);
+      content: 'New Text',
+      x: 50,
+      y: 50,
+      fontSize: 24
+    }]);
   };
 
-  const addImage = (e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const newImage = {
-        id: Date.now(),
-        type: 'image',
-        src: reader.result,
-        x: 100,
-        y: 200,
-        width: 200,
-        height: 200,
-      };
-      setElements([...elements, newImage]);
-    };
-    if (file) reader.readAsDataURL(file);
-  };
-
-  const addButton = () => {
-    const newBtn = {
+  const addImage = () => {
+    const url = prompt("Enter image URL");
+    if (!url) return;
+    setElements(prev => [...prev, {
       id: Date.now(),
-      type: 'button',
-      content: 'Click Me',
-      url: 'https://example.com',
-      x: 100,
-      y: 300,
-      width: 150,
-      height: 40,
-    };
-    setElements([...elements, newBtn]);
+      type: 'image',
+      src: url,
+      x: 50,
+      y: 50,
+      width: 200
+    }]);
   };
 
-  const updatePosition = (id, x, y, width, height) => {
-    setElements(prev => prev.map(el => el.id === id ? { ...el, x, y, width, height } : el));
+  const updatePosition = (id, deltaX, deltaY) => {
+    setElements(prev => prev.map(el => el.id === id
+      ? { ...el, x: el.x + deltaX, y: el.y + deltaY }
+      : el));
   };
 
-  const updateText = (id, newText) => {
-    setElements(prev => prev.map(el => el.id === id ? { ...el, content: newText } : el));
-  };
-
-  const saveLayout = async () => {
-    await axios.post(`${API}/showcase`, {
-      layout: { elements },
-    });
-    alert('Saved');
+  const resizeElement = (id, change) => {
+    setElements(prev => prev.map(el => {
+      if (el.id !== id) return el;
+      if (el.type === 'text') return { ...el, fontSize: el.fontSize + change };
+      if (el.type === 'image') return { ...el, width: el.width + change };
+      return el;
+    }));
   };
 
   return (
-    <div className="edit-showcase">
+    <div className="edit-container" style={{ backgroundColor, backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none' }}>
       <div className="toolbar">
         <button onClick={addText}>Add Text</button>
-        <input type="file" accept="image/*" onChange={addImage} />
-        <button onClick={addButton}>Add Button</button>
-        <button onClick={saveLayout}>Save & Publish</button>
+        <button onClick={addImage}>Add Image</button>
       </div>
-      <div className="canvas">
-        {elements.map(el => (
-          <Rnd
-            key={el.id}
-            size={{ width: el.width, height: el.height }}
-            position={{ x: el.x, y: el.y }}
-            onDragStop={(e, d) => updatePosition(el.id, d.x, d.y, el.width, el.height)}
-            onResizeStop={(e, direction, ref, delta, pos) =>
-              updatePosition(el.id, pos.x, pos.y, parseInt(ref.style.width), parseInt(ref.style.height))
-            }
-          >
-            {el.type === 'text' && (
-              <textarea
-                className="text-box"
+      {elements.map(el => (
+        <div
+          key={el.id}
+          className="element"
+          style={{
+            position: 'absolute',
+            top: el.y,
+            left: el.x,
+            fontSize: el.fontSize,
+            cursor: 'move',
+          }}
+          onMouseDown={e => {
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const handleMove = e => {
+              updatePosition(el.id, e.clientX - startX, e.clientY - startY);
+            };
+            const handleUp = () => {
+              window.removeEventListener('mousemove', handleMove);
+              window.removeEventListener('mouseup', handleUp);
+            };
+            window.addEventListener('mousemove', handleMove);
+            window.addEventListener('mouseup', handleUp);
+          }}
+        >
+          {el.type === 'text' && (
+            <div>
+              <input
                 value={el.content}
-                onChange={e => updateText(el.id, e.target.value)}
+                onChange={e =>
+                  setElements(prev => prev.map(e2 =>
+                    e2.id === el.id ? { ...e2, content: e.target.value } : e2
+                  ))
+                }
               />
-            )}
-            {el.type === 'image' && <img src={el.src} alt="" className="image-box" />}
-            {el.type === 'button' && (
-              <a href={el.url} className="btn-box" target="_blank" rel="noreferrer">
-                {el.content}
-              </a>
-            )}
-          </Rnd>
-        ))}
-      </div>
+              <button onClick={() => resizeElement(el.id, 2)}>A+</button>
+              <button onClick={() => resizeElement(el.id, -2)}>A-</button>
+            </div>
+          )}
+          {el.type === 'image' && (
+            <div>
+              <img src={el.src} width={el.width} alt="" />
+              <button onClick={() => resizeElement(el.id, 20)}>+</button>
+              <button onClick={() => resizeElement(el.id, -20)}>-</button>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
-};
-
-export default EditShowcase;
+}
