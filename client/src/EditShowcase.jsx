@@ -1,143 +1,117 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
 import './EditShowcase.css';
+import axios from 'axios';
 
 const API = 'https://bh-backend-clean.onrender.com';
 
-const defaultElement = (type) => ({
-  id: Date.now(),
-  type,
-  x: 100,
-  y: 100,
-  width: 200,
-  height: 100,
-  zIndex: 1,
-  rotation: 0,
-  locked: false,
-  group: null,
-  ...(type === 'text' && { content: 'Edit text', fontSize: '16px', color: '#000', backgroundColor: 'transparent', fontFamily: 'Arial' }),
-  ...(type === 'image' && { src: '', border: 'none', boxShadow: 'none' }),
-  ...(type === 'button' && { text: 'Click Me', link: '' }),
-});
-
 const EditShowcase = () => {
   const [elements, setElements] = useState([]);
-  const [backgroundColor, setBackgroundColor] = useState('#fff');
-  const [backgroundImage, setBackgroundImage] = useState(null);
 
   useEffect(() => {
-    const fetchDraft = async () => {
-      try {
-        const res = await fetch(`${API}/showcase/draft`);
-        const data = await res.json();
-        setElements(data.elements || []);
-        setBackgroundColor(data.backgroundColor || '#fff');
-        setBackgroundImage(data.backgroundImage || null);
-      } catch (err) {
-        console.error('Error loading draft:', err);
-      }
-    };
-    fetchDraft();
+    fetchLayout();
   }, []);
 
-  const saveLayout = async (isDraft) => {
-    try {
-      await fetch(`${API}/showcase/save`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ layout: { elements, backgroundColor, backgroundImage }, isDraft }),
-      });
-      alert(isDraft ? 'Draft saved!' : 'Published successfully!');
-    } catch (err) {
-      console.error('Error saving:', err);
-    }
+  const fetchLayout = async () => {
+    const res = await axios.get(`${API}/showcase`);
+    if (res.data) setElements(res.data.elements || []);
   };
 
-  const updateElement = (id, updates) => {
-    setElements((prev) =>
-      prev.map((el) => (el.id === id ? { ...el, ...updates } : el))
-    );
+  const addText = () => {
+    const newText = {
+      id: Date.now(),
+      type: 'text',
+      content: 'Edit Me',
+      x: 100,
+      y: 100,
+      width: 200,
+      height: 50,
+    };
+    setElements([...elements, newText]);
+  };
+
+  const addImage = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const newImage = {
+        id: Date.now(),
+        type: 'image',
+        src: reader.result,
+        x: 100,
+        y: 200,
+        width: 200,
+        height: 200,
+      };
+      setElements([...elements, newImage]);
+    };
+    if (file) reader.readAsDataURL(file);
+  };
+
+  const addButton = () => {
+    const newBtn = {
+      id: Date.now(),
+      type: 'button',
+      content: 'Click Me',
+      url: 'https://example.com',
+      x: 100,
+      y: 300,
+      width: 150,
+      height: 40,
+    };
+    setElements([...elements, newBtn]);
+  };
+
+  const updatePosition = (id, x, y, width, height) => {
+    setElements(prev => prev.map(el => el.id === id ? { ...el, x, y, width, height } : el));
+  };
+
+  const updateText = (id, newText) => {
+    setElements(prev => prev.map(el => el.id === id ? { ...el, content: newText } : el));
+  };
+
+  const saveLayout = async () => {
+    await axios.post(`${API}/showcase`, {
+      layout: { elements },
+    });
+    alert('Saved');
   };
 
   return (
-    <div
-      className="edit-showcase"
-      style={{
-        backgroundColor,
-        backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
-        minHeight: '200vh',
-      }}
-    >
+    <div className="edit-showcase">
       <div className="toolbar">
-        <button onClick={() => setElements((prev) => [...prev, defaultElement('text')])}>Add Text</button>
-        <button onClick={() => setElements((prev) => [...prev, defaultElement('image')])}>Add Image</button>
-        <button onClick={() => setElements((prev) => [...prev, defaultElement('button')])}>Add Button</button>
-        <input type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onloadend = () => setBackgroundImage(reader.result);
-            reader.readAsDataURL(file);
-          }}
-        />
-        <button onClick={() => saveLayout(true)}>Save Draft</button>
-        <button onClick={() => saveLayout(false)}>Publish</button>
+        <button onClick={addText}>Add Text</button>
+        <input type="file" accept="image/*" onChange={addImage} />
+        <button onClick={addButton}>Add Button</button>
+        <button onClick={saveLayout}>Save & Publish</button>
       </div>
-
-      {elements.map((el) => (
-        <Rnd
-          key={el.id}
-          size={{ width: el.width, height: el.height }}
-          position={{ x: el.x, y: el.y }}
-          onDragStop={(e, d) => !el.locked && updateElement(el.id, { x: d.x, y: d.y })}
-          onResizeStop={(e, direction, ref, delta, pos) => !el.locked && updateElement(el.id, { width: ref.offsetWidth, height: ref.offsetHeight, ...pos })}
-          style={{ zIndex: el.zIndex, transform: `rotate(${el.rotation}deg)` }}
-          bounds="parent"
-        >
-          {el.type === 'text' && (
-            <div
-              contentEditable
-              suppressContentEditableWarning
-              style={{
-                fontSize: el.fontSize,
-                color: el.color,
-                backgroundColor: el.backgroundColor,
-                fontFamily: el.fontFamily,
-              }}
-              onBlur={(e) => updateElement(el.id, { content: e.target.innerText })}
-            >
-              {el.content}
-            </div>
-          )}
-          {el.type === 'image' && (
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onloadend = () => updateElement(el.id, { src: reader.result });
-                reader.readAsDataURL(file);
-              }}
-            />
-          )}
-          {el.type === 'button' && (
-            <button
-              onClick={() => {
-                const link = prompt('Enter button link:', el.link);
-                if (link) updateElement(el.id, { link });
-              }}
-            >
-              {el.text}
-            </button>
-          )}
-        </Rnd>
-      ))}
+      <div className="canvas">
+        {elements.map(el => (
+          <Rnd
+            key={el.id}
+            size={{ width: el.width, height: el.height }}
+            position={{ x: el.x, y: el.y }}
+            onDragStop={(e, d) => updatePosition(el.id, d.x, d.y, el.width, el.height)}
+            onResizeStop={(e, direction, ref, delta, pos) =>
+              updatePosition(el.id, pos.x, pos.y, parseInt(ref.style.width), parseInt(ref.style.height))
+            }
+          >
+            {el.type === 'text' && (
+              <textarea
+                className="text-box"
+                value={el.content}
+                onChange={e => updateText(el.id, e.target.value)}
+              />
+            )}
+            {el.type === 'image' && <img src={el.src} alt="" className="image-box" />}
+            {el.type === 'button' && (
+              <a href={el.url} className="btn-box" target="_blank" rel="noreferrer">
+                {el.content}
+              </a>
+            )}
+          </Rnd>
+        ))}
+      </div>
     </div>
   );
 };
