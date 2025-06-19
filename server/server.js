@@ -167,3 +167,24 @@ app.get('/showcase', async (req, res) => {
   if (!data) return res.json({ elements: [], backgroundColor: '#fff', backgroundImage: null });
   res.json(data);
 });
+app.get('/clients', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('clients').select('*');
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error('GET /clients error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/selections', async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('selections').select('*');
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error('GET /selections error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
