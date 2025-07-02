@@ -13,7 +13,7 @@ const Landing = () => {
 
   const handleAdminAccess = () => {
     if (passcode === correctPasscode) {
-      navigate('/photographer');
+      navigate('/photographer-login');
     } else {
       alert('Incorrect password');
     }
