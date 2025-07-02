@@ -6,7 +6,6 @@ const API = 'https://bh-backend-clean.onrender.com';
 
 const EditShowcase = () => {
   const [elements, setElements] = useState([]);
-  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     axios.get(`${API}/showcase`).then(res => {
