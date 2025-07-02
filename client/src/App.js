@@ -22,4 +22,4 @@ function App() {
   );
 }
 
-export default Photographer;
+export default App;
