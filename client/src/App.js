@@ -14,7 +14,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/photographer-login" element={<Photographer />} />
         <Route path="/client-login" element={<ClientLogin />} />
-        <Route path="/client-gallery/:id" element={<ClientGallery />} />
+        <Route path="/gallery/:id" element={<ClientGallery />} />
         <Route path="/edit-showcase" element={<EditShowcase />} />
         <Route path="/showcase" element={<Showcase />} />
       </Routes>
