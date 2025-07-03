@@ -6,7 +6,7 @@ import './App.css';
 const API = 'https://bh-backend-clean.onrender.com';
 
 const ClientGallery = () => {
-  const { id } = useParams();
+  const { clientId } = useParams();
   const [client, setClient] = useState(null);
   const [selected, setSelected] = useState([]);
   const [enlargedIndex, setEnlargedIndex] = useState(null);
