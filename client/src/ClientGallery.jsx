@@ -12,14 +12,11 @@ const ClientGallery = () => {
   const [enlargedIndex, setEnlargedIndex] = useState(null);
 
   useEffect(() => {
-    const fetchClient = async () => {
+    const fetchClientData = async () => {
       try {
         const res = await fetch(`${API}/clients/${id}`);
-        if (!res.ok) {
-          throw new Error(`Failed to fetch: ${res.status}`);
-        }
         const data = await res.json();
-        setClient(data);
+        setClient(data); // data should be a single client object with images
       } catch (err) {
         console.error('Failed to fetch client data:', err);
       }
@@ -29,20 +26,20 @@ const ClientGallery = () => {
       try {
         const res = await fetch(`${API}/selections`);
         const data = await res.json();
-        const match = data.find((entry) => entry.id === id);
-        setSelected(match?.selected || []);
+        const selectionMatch = data.find(s => s.id === id);
+        setSelected(selectionMatch?.selected || []);
       } catch (err) {
         console.error('Failed to fetch selections:', err);
       }
     };
 
-    fetchClient();
+    fetchClientData();
     fetchSelections();
   }, [id]);
 
   const handleSelect = (img) => {
     setSelected((prev) =>
-      prev.includes(img) ? prev.filter((i) => i !== img) : [...prev, img]
+      prev.includes(img) ? prev.filter(i => i !== img) : [...prev, img]
     );
   };
 
@@ -60,18 +57,14 @@ const ClientGallery = () => {
   };
 
   const goToPrev = () => {
-    if (client?.images?.length > 0) {
-      setEnlargedIndex((prev) =>
-        prev === 0 ? client.images.length - 1 : prev - 1
-      );
+    if (client && client.images.length > 0) {
+      setEnlargedIndex((prev) => (prev === 0 ? client.images.length - 1 : prev - 1));
     }
   };
 
   const goToNext = () => {
-    if (client?.images?.length > 0) {
-      setEnlargedIndex((prev) =>
-        prev === client.images.length - 1 ? 0 : prev + 1
-      );
+    if (client && client.images.length > 0) {
+      setEnlargedIndex((prev) => (prev === client.images.length - 1 ? 0 : prev + 1));
     }
   };
 
