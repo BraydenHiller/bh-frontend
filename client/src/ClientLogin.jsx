@@ -14,7 +14,7 @@ const ClientLogin = () => {
     try {
       const res = await fetch(`${API}/clients`);
       const clients = await res.json();
-      const client = clients.find(c => c.id === clientId && c.password === password);
+      const client = clients.find(c => c.name === clientId && c.password === password);
 
       if (client) {
         navigate(`/gallery/${client.id}`);
