@@ -6,7 +6,7 @@ import './App.css';
 const API = 'https://bh-backend-clean.onrender.com';
 
 const ClientGallery = () => {
-  const { clientId } = useParams();
+  const { id } = useParams();
   const [client, setClient] = useState(null);
   const [selected, setSelected] = useState([]);
   const [enlargedIndex, setEnlargedIndex] = useState(null);
@@ -14,7 +14,7 @@ const ClientGallery = () => {
   useEffect(() => {
     const fetchClientData = async () => {
       try {
-        const res = await fetch(`${API}/clients/${clientId}`);
+        const res = await fetch(`${API}/clients/${id}`);
         const data = await res.json();
         setClient(data);
       } catch (err) {
@@ -26,7 +26,7 @@ const ClientGallery = () => {
       try {
         const res = await fetch(`${API}/selections`);
         const data = await res.json();
-        const selectionMatch = data.find(s => s.id === clientId);
+        const selectionMatch = data.find(s => s.id === id);
         setSelected(selectionMatch?.selected || []);
       } catch (err) {
         console.error('Failed to fetch selections:', err);
@@ -35,7 +35,7 @@ const ClientGallery = () => {
 
     fetchClientData();
     fetchSelections();
-  }, [clientId]);
+  }, [id]);
 
   const handleSelect = (img) => {
     setSelected((prev) =>
@@ -48,7 +48,7 @@ const ClientGallery = () => {
       await fetch(`${API}/selections`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: clientId, selected }),
+        body: JSON.stringify({ id: id, selected }),
       });
       alert('Selections submitted!');
     } catch (err) {
