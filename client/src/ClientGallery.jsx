@@ -6,19 +6,25 @@ import './App.css';
 const API = 'https://bh-backend-clean.onrender.com';
 
 const ClientGallery = () => {
-  const { id } = useParams();
+  const { id } = useParams(); // This must be the actual client.id, NOT client.name
   const [client, setClient] = useState(null);
   const [selected, setSelected] = useState([]);
   const [enlargedIndex, setEnlargedIndex] = useState(null);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     const fetchClientData = async () => {
       try {
         const res = await fetch(`${API}/clients/${id}`);
+        if (!res.ok) {
+          setNotFound(true);
+          return;
+        }
         const data = await res.json();
-        setClient(data); // data should be a single client object with images
+        setClient(data);
       } catch (err) {
         console.error('Failed to fetch client data:', err);
+        setNotFound(true);
       }
     };
 
@@ -26,8 +32,8 @@ const ClientGallery = () => {
       try {
         const res = await fetch(`${API}/selections`);
         const data = await res.json();
-        const selectionMatch = data.find(s => s.id === id);
-        setSelected(selectionMatch?.selected || []);
+        const match = data.find(s => s.id === id);
+        setSelected(match?.selected || []);
       } catch (err) {
         console.error('Failed to fetch selections:', err);
       }
@@ -38,7 +44,7 @@ const ClientGallery = () => {
   }, [id]);
 
   const handleSelect = (img) => {
-    setSelected((prev) =>
+    setSelected(prev =>
       prev.includes(img) ? prev.filter(i => i !== img) : [...prev, img]
     );
   };
@@ -57,16 +63,20 @@ const ClientGallery = () => {
   };
 
   const goToPrev = () => {
-    if (client && client.images.length > 0) {
-      setEnlargedIndex((prev) => (prev === 0 ? client.images.length - 1 : prev - 1));
+    if (client?.images?.length) {
+      setEnlargedIndex(prev => (prev === 0 ? client.images.length - 1 : prev - 1));
     }
   };
 
   const goToNext = () => {
-    if (client && client.images.length > 0) {
-      setEnlargedIndex((prev) => (prev === client.images.length - 1 ? 0 : prev + 1));
+    if (client?.images?.length) {
+      setEnlargedIndex(prev => (prev === client.images.length - 1 ? 0 : prev + 1));
     }
   };
+
+  if (notFound) {
+    return <p style={{ color: 'white', textAlign: 'center' }}>Client not found.</p>;
+  }
 
   if (!client) {
     return <p style={{ color: 'white', textAlign: 'center' }}>Loading gallery...</p>;
