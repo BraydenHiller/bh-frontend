@@ -14,7 +14,7 @@ const ClientGallery = () => {
   useEffect(() => {
     const fetchClientData = async () => {
       try {
-        const res = await fetch(`${API}/clients`);
+        const res = await fetch(`${API}/clients/${id}`);
         const data = await res.json();
         const match = data.find(c => c.id === clientId);
         if (match) {
