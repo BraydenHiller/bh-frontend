@@ -16,12 +16,7 @@ const ClientGallery = () => {
       try {
         const res = await fetch(`${API}/clients/${clientId}`);
         const data = await res.json();
-        const match = data.find(c => c.id === clientId);
-        if (match) {
-          setClient(match);
-        } else {
-          console.warn('No client found with the given ID.');
-        }
+        setClient(data);
       } catch (err) {
         console.error('Failed to fetch client data:', err);
       }
