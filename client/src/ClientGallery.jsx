@@ -12,9 +12,12 @@ const ClientGallery = () => {
   const [enlargedIndex, setEnlargedIndex] = useState(null);
 
   useEffect(() => {
-    const fetchClientData = async () => {
+    const fetchClient = async () => {
       try {
         const res = await fetch(`${API}/clients/${id}`);
+        if (!res.ok) {
+          throw new Error(`Failed to fetch: ${res.status}`);
+        }
         const data = await res.json();
         setClient(data);
       } catch (err) {
@@ -26,20 +29,20 @@ const ClientGallery = () => {
       try {
         const res = await fetch(`${API}/selections`);
         const data = await res.json();
-        const selectionMatch = data.find(s => s.id === id);
-        setSelected(selectionMatch?.selected || []);
+        const match = data.find((entry) => entry.id === id);
+        setSelected(match?.selected || []);
       } catch (err) {
         console.error('Failed to fetch selections:', err);
       }
     };
 
-    fetchClientData();
+    fetchClient();
     fetchSelections();
   }, [id]);
 
   const handleSelect = (img) => {
     setSelected((prev) =>
-      prev.includes(img) ? prev.filter(i => i !== img) : [...prev, img]
+      prev.includes(img) ? prev.filter((i) => i !== img) : [...prev, img]
     );
   };
 
@@ -48,7 +51,7 @@ const ClientGallery = () => {
       await fetch(`${API}/selections`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: id, selected }),
+        body: JSON.stringify({ id, selected }),
       });
       alert('Selections submitted!');
     } catch (err) {
@@ -57,14 +60,18 @@ const ClientGallery = () => {
   };
 
   const goToPrev = () => {
-    if (client && client.images.length > 0) {
-      setEnlargedIndex((prev) => (prev === 0 ? client.images.length - 1 : prev - 1));
+    if (client?.images?.length > 0) {
+      setEnlargedIndex((prev) =>
+        prev === 0 ? client.images.length - 1 : prev - 1
+      );
     }
   };
 
   const goToNext = () => {
-    if (client && client.images.length > 0) {
-      setEnlargedIndex((prev) => (prev === client.images.length - 1 ? 0 : prev + 1));
+    if (client?.images?.length > 0) {
+      setEnlargedIndex((prev) =>
+        prev === client.images.length - 1 ? 0 : prev + 1
+      );
     }
   };
 
