@@ -25,6 +25,7 @@ const Photographer = () => {
   const [editName, setEditName] = useState('');
   const [editId, setEditId] = useState('');
   const [editPassword, setEditPassword] = useState('');
+  const [editMax, setEditMax] = useState('');
 
   useEffect(() => {
     fetchClients();
@@ -67,6 +68,7 @@ const Photographer = () => {
     setEditName(client.name);
     setEditId(client.id);
     setEditPassword(client.password || '');
+    setEditMax(client.maxSelections || '');
     setEditingClient(client);
   };
 
@@ -76,7 +78,12 @@ const Photographer = () => {
       await fetch(`${API}/clients/${editingClient.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editId, name: editName, password: editPassword }),
+        body: JSON.stringify({
+          id: editId,
+          name: editName,
+          password: editPassword,
+          maxSelections: editMax ? parseInt(editMax) : undefined
+        }),
       });
       setEditingClient(null);
       fetchClients();
@@ -88,7 +95,6 @@ const Photographer = () => {
   const cancelEdit = () => {
     setEditingClient(null);
   };
-
   const addClient = async () => {
     if (!newClientId || !newClientName || !newPassword) {
       alert('Please fill in all fields.');
@@ -98,7 +104,7 @@ const Photographer = () => {
       const res = await fetch(`${API}/clients`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: newClientId, name: newClientName, password: newPassword })
+        body: JSON.stringify({ id: newClientId, name: newClientName, password: newPassword, maxSelections: null })
       });
       if (!res.ok) {
         const err = await res.json();
@@ -201,8 +207,21 @@ const Photographer = () => {
 
   const updateSelection = async (clientId, imageUrl) => {
     const current = getClientSelections(clientId);
+    const client = clients.find(c => c.id === clientId);
+    const max = client?.maxSelections || Infinity;
+
     const isSelected = current.includes(imageUrl);
-    const updated = isSelected ? current.filter(i => i !== imageUrl) : [...current, imageUrl];
+    const updated = isSelected
+      ? current.filter(i => i !== imageUrl)
+      : current.length < max
+        ? [...current, imageUrl]
+        : current;
+
+    if (!isSelected && current.length >= max) {
+      alert(`Selection limit of ${max} reached.`);
+      return;
+    }
+
     try {
       await fetch(`${API}/selections`, {
         method: 'POST',
@@ -266,6 +285,7 @@ const Photographer = () => {
               </div>
               {!isCollapsed && (
                 <>
+                  <p>Max Selections: {client.maxSelections || 'Unlimited'}</p>
                   <a href={`/gallery/${client.id}`} target="_blank" rel="noreferrer">
                     <button>View Gallery</button>
                   </a>
@@ -374,6 +394,7 @@ const Photographer = () => {
             <input placeholder="Client Name" value={editName} onChange={(e) => setEditName(e.target.value)} />
             <input placeholder="Client ID" value={editId} onChange={(e) => setEditId(e.target.value)} />
             <input placeholder="Password" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} />
+            <input placeholder="Max Selections" type="number" value={editMax} onChange={(e) => setEditMax(e.target.value)} />
             <div className="modal-actions">
               <button onClick={saveClientEdits}>Save</button>
               <button onClick={cancelEdit} style={{ backgroundColor: '#a00' }}>Cancel</button>

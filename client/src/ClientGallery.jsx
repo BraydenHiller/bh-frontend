@@ -10,6 +10,7 @@ const ClientGallery = () => {
   const [client, setClient] = useState(null);
   const [selected, setSelected] = useState([]);
   const [enlargedIndex, setEnlargedIndex] = useState(null);
+  const [showOnlySelected, setShowOnlySelected] = useState(false);
 
   useEffect(() => {
     const fetchClientData = async () => {
@@ -42,9 +43,16 @@ const ClientGallery = () => {
     fetchSelections();
   }, [id]);
 
+  const maxSelections = client?.maxSelections || Infinity;
+
   const handleSelect = (img) => {
+    const isSelected = selected.includes(img);
+    if (!isSelected && selected.length >= maxSelections) {
+      alert(`You’ve reached your selection limit of ${maxSelections} images.`);
+      return;
+    }
     setSelected((prev) =>
-      prev.includes(img) ? prev.filter(i => i !== img) : [...prev, img]
+      isSelected ? prev.filter(i => i !== img) : [...prev, img]
     );
   };
 
@@ -62,20 +70,22 @@ const ClientGallery = () => {
   };
 
   const goToPrev = () => {
-    if (client && client.images.length > 0) {
-      setEnlargedIndex((prev) => (prev === 0 ? client.images.length - 1 : prev - 1));
-    }
+    if (!client?.images?.length) return;
+    setEnlargedIndex((prev) => (prev === 0 ? client.images.length - 1 : prev - 1));
   };
 
   const goToNext = () => {
-    if (client && client.images.length > 0) {
-      setEnlargedIndex((prev) => (prev === client.images.length - 1 ? 0 : prev + 1));
-    }
+    if (!client?.images?.length) return;
+    setEnlargedIndex((prev) => (prev === client.images.length - 1 ? 0 : prev + 1));
   };
 
   if (!client) {
     return <p style={{ color: 'white', textAlign: 'center' }}>Loading gallery...</p>;
   }
+
+  const visibleImages = showOnlySelected
+    ? client.images.filter((img) => selected.includes(img))
+    : client.images;
 
   return (
     <motion.div
@@ -84,14 +94,34 @@ const ClientGallery = () => {
       animate={{ opacity: 1 }}
       style={{ textAlign: 'center' }}
     >
-      <h1 style={{ color: 'white' }}>{client.name}'s Gallery</h1>
+      <h1 style={{ color: '#f5c518' }}>{client.name}'s Gallery</h1>
+      <p style={{ color: '#ffffff', marginBottom: '1rem', fontWeight: 'bold' }}>
+        You have selected {selected.length} of {maxSelections === Infinity ? '∞' : maxSelections} images
+      </p>
+
+      <button
+        onClick={() => setShowOnlySelected((prev) => !prev)}
+        style={{
+          marginBottom: '1rem',
+          background: '#f5c518',
+          color: '#0d1117',
+          padding: '10px 20px',
+          border: 'none',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          fontWeight: 'bold'
+        }}
+      >
+        {showOnlySelected ? 'Show All Images' : 'Show Selected Only'}
+      </button>
 
       <div className="thumbnail-grid" style={{ justifyContent: 'center' }}>
-        {client.images.map((src, idx) => (
+        {visibleImages.map((src, idx) => (
           <div
             key={idx}
             className="thumbnail-wrapper"
-            onClick={() => setEnlargedIndex(idx)}
+            onClick={() => setEnlargedIndex(client.images.indexOf(src))}
+            onDoubleClick={() => handleSelect(src)}
           >
             <img
               src={src}
@@ -103,16 +133,28 @@ const ClientGallery = () => {
                 objectFit: 'cover',
                 borderRadius: '6px',
                 border: selected.includes(src)
-                  ? '3px solid #bfa100'
+                  ? '3px solid #f5c518'
                   : '1px solid #666',
-                boxShadow: selected.includes(src) ? '0 0 8px #bfa100' : 'none',
+                boxShadow: selected.includes(src) ? '0 0 8px #f5c518' : 'none',
               }}
             />
           </div>
         ))}
       </div>
 
-      <button onClick={handleSubmit} style={{ marginTop: '1rem' }}>
+      <button
+        onClick={handleSubmit}
+        style={{
+          marginTop: '1.5rem',
+          background: '#f5c518',
+          color: '#0d1117',
+          padding: '10px 20px',
+          fontWeight: 'bold',
+          border: 'none',
+          borderRadius: '6px',
+          cursor: 'pointer'
+        }}
+      >
         Submit Selections
       </button>
 
@@ -139,8 +181,23 @@ const ClientGallery = () => {
               <button onClick={(e) => { e.stopPropagation(); setEnlargedIndex(null); }}>⬅ Back</button>
               <button onClick={(e) => { e.stopPropagation(); goToNext(); }}>▶</button>
             </div>
+
+            <p style={{ color: '#f5c518', fontWeight: 'bold', marginTop: '1rem' }}>
+              {selected.includes(client.images[enlargedIndex])
+                ? `Selected`
+                : `You can select ${maxSelections - selected.length} more`}
+            </p>
+
             <button
               className="select-btn"
+              style={{
+                background: '#f5c518',
+                color: '#0d1117',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                marginTop: '0.5rem'
+              }}
               onClick={(e) => {
                 e.stopPropagation();
                 handleSelect(client.images[enlargedIndex]);
