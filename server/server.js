@@ -184,11 +184,6 @@ app.post('/selections', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-app.listen(PORT, () => {
-  console.log(`✅ BH Capture Co backend running on port ${PORT}`);
-});
-// Update client info (name, password, maxSelections)
 app.put('/clients/:id', async (req, res) => {
   const { id } = req.params;
   const { name, password, maxSelections } = req.body;
@@ -211,3 +206,8 @@ app.put('/clients/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+app.listen(PORT, () => {
+  console.log(`✅ BH Capture Co backend running on port ${PORT}`);
+});
+// Update client info (name, password, maxSelections)
