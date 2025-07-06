@@ -394,3 +394,92 @@ button:hover {
   width: 200px;
 }
 
+/* Center top dashboard section */
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+  margin-bottom: 1rem;
+}
+
+/* Align form inside center */
+.form-section input,
+.form-section button {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Collapsed client card style (optional shadow or just hiding content) */
+.client-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.client-controls button {
+  margin-left: 0.5rem;
+}
+
+/* Modal styling */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background-color: #161b22;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 400px;
+  color: white;
+  box-shadow: 0 0 25px rgba(245, 197, 24, 0.4);
+  text-align: center;
+}
+
+.modal-content input {
+  margin: 0.5rem 0;
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background-color: #0a0f1c;
+  color: white;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.modal-actions button {
+  flex: 1;
+  margin: 0 0.5rem;
+}
+
+/* Optional: Style update to make link look like button */
+a > button {
+  background-color: #f5c518;
+  color: #0d1117;
+  padding: 8px 16px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+a > button:hover {
+  background-color: #d4aa00;
+}
