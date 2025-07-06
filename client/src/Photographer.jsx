@@ -21,7 +21,7 @@ const Photographer = () => {
   const [bulkDelete, setBulkDelete] = useState({});
   const [showSelectedOnly, setShowSelectedOnly] = useState({});
   const [collapsedClients, setCollapsedClients] = useState({});
-  const [editingClient, setEditingClient] = useState(null); // { id, name, password }
+  const [editingClient, setEditingClient] = useState(null);
   const [editName, setEditName] = useState('');
   const [editId, setEditId] = useState('');
   const [editPassword, setEditPassword] = useState('');
@@ -88,7 +88,8 @@ const Photographer = () => {
   const cancelEdit = () => {
     setEditingClient(null);
   };
-    const addClient = async () => {
+
+  const addClient = async () => {
     if (!newClientId || !newClientName || !newPassword) {
       alert('Please fill in all fields.');
       return;
@@ -272,7 +273,12 @@ const Photographer = () => {
                   <p>Gallery: {client.images?.length || 0} | Selected: {selectedImages.length}</p>
                   <button onClick={() => exportSelections(client.id, client.name)} disabled={selectedImages.length === 0}>Export Selections</button>
                   <button onClick={() => handleDeleteClient(client.id)} style={{ marginLeft: '0.5rem', backgroundColor: '#a00' }}>Delete Client</button>
-                  <button onClick={() => setBulkDelete(prev => ({ ...prev, [client.id]: prev[client.id]?.length ? [] : null }))} style={{ marginLeft: '0.5rem' }}>
+                  <button onClick={() =>
+                    setBulkDelete(prev => ({
+                      ...prev,
+                      [client.id]: prev[client.id] ? undefined : []
+                    }))
+                  } style={{ marginLeft: '0.5rem' }}>
                     🗑️ Bulk Delete Mode
                   </button>
                   <button onClick={() => setShowSelectedOnly(prev => ({ ...prev, [client.id]: !prev[client.id] }))} style={{ marginLeft: '0.5rem' }}>
@@ -319,7 +325,6 @@ const Photographer = () => {
         })}
       </div>
 
-      {/* Image Overlay */}
       <AnimatePresence>
         {enlargedImage && (
           <motion.div className="overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -346,7 +351,11 @@ const Photographer = () => {
                 const client = clients.find(c => c.images.includes(enlargedImage));
                 if (client) updateSelection(client.id, enlargedImage);
               }}>
-                Toggle Select
+                {(() => {
+                  const client = clients.find(c => c.images.includes(enlargedImage));
+                  const selected = client && getClientSelections(client.id).includes(enlargedImage);
+                  return selected ? 'Selected ✅' : 'Not Selected ❌';
+                })()}
               </button>
               <button onClick={() => {
                 const newIndex = (enlargedIndex + 1) % enlargedGroup.length;
@@ -358,7 +367,6 @@ const Photographer = () => {
         )}
       </AnimatePresence>
 
-      {/* Edit Client Modal */}
       {editingClient && (
         <div className="modal-backdrop">
           <div className="modal-content">
