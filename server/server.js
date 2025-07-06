@@ -188,3 +188,26 @@ app.post('/selections', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ BH Capture Co backend running on port ${PORT}`);
 });
+// Update client info (name, password, maxSelections)
+app.put('/clients/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, password, maxSelections } = req.body;
+
+  try {
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (password !== undefined) updates.password = password;
+    if (maxSelections !== undefined) updates.maxSelections = maxSelections;
+
+    const { data, error } = await supabase
+      .from('clients')
+      .update(updates)
+      .eq('id', id);
+
+    if (error) throw error;
+    res.json({ success: true, updated: data });
+  } catch (err) {
+    console.error('PUT /clients/:id error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
