@@ -235,3 +235,4 @@ app.listen(PORT, () => {
   console.log(`✅ BH Capture Co backend running on port ${PORT}`);
 });
 // Update client info (name, password, maxSelections)
+// Triggered update for Render redeploy
