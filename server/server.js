@@ -188,6 +188,9 @@ app.put('/clients/:id', async (req, res) => {
   const { id } = req.params;
   const { name, password, maxSelections } = req.body;
 
+  console.log('Received update for client:', id);
+  console.log('Update payload:', { name, password, maxSelections });
+
   const updateFields = {};
   if (name !== undefined) updateFields.name = name;
   if (password !== undefined) updateFields.password = password;
@@ -210,7 +213,6 @@ app.put('/clients/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 app.listen(PORT, () => {
   console.log(`✅ BH Capture Co backend running on port ${PORT}`);
