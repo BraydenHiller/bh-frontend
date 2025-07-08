@@ -5,8 +5,13 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://hkoymztwxehqaqwoninw.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'your_supabase_key';
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  console.error("❌ Missing Supabase environment variables");
+  process.exit(1);
+}
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -17,7 +22,7 @@ app.get('/', (req, res) => {
   res.send('📸 BH Capture Co backend with Showcase updates');
 });
 
-// Get showcase layout by status (draft or published)
+// Get showcase layout
 app.get('/showcase/:status', async (req, res) => {
   const { status } = req.params;
   try {
@@ -41,7 +46,7 @@ app.get('/showcase/:status', async (req, res) => {
   }
 });
 
-// Save layout as draft or published
+// Save showcase layout
 app.post('/showcase/save', async (req, res) => {
   const { layout, isDraft } = req.body;
   const status = isDraft ? 'draft' : 'published';
@@ -55,7 +60,6 @@ app.post('/showcase/save', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 // Get all clients
 app.get('/clients', async (req, res) => {
   try {
@@ -63,14 +67,13 @@ app.get('/clients', async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (err) {
-    console.error('GET /clients error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Create a new client
+// Create new client
 app.post('/clients', async (req, res) => {
-  const { id, name, password } = req.body;
+  const { id, name, password, maxSelections } = req.body;
   if (!id || !name || !password) {
     return res.status(400).json({ error: 'Missing fields' });
   }
@@ -83,7 +86,7 @@ app.post('/clients', async (req, res) => {
 
     const { error } = await supabase
       .from('clients')
-      .insert([{ id, name, password, images: [] }]);
+      .insert([{ id, name, password, images: [], maxSelections: maxSelections || 20 }]);
 
     if (error) throw error;
 
@@ -93,7 +96,7 @@ app.post('/clients', async (req, res) => {
   }
 });
 
-// Upload images to client gallery
+// Upload images
 app.post('/upload', async (req, res) => {
   const { id, images } = req.body;
 
@@ -120,7 +123,6 @@ app.post('/upload', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 // Replace client images
 app.post('/update-images', async (req, res) => {
   const { id, images } = req.body;
@@ -138,7 +140,7 @@ app.post('/update-images', async (req, res) => {
   }
 });
 
-// Delete a client and their selections
+// Delete a client
 app.delete('/clients/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -167,7 +169,7 @@ app.get('/selections', async (req, res) => {
   }
 });
 
-// Save selections for a client
+// Save selections
 app.post('/selections', async (req, res) => {
   const { id, selected } = req.body;
 
@@ -184,13 +186,11 @@ app.post('/selections', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Update client info by ID
 app.put('/clients/:id', async (req, res) => {
   const { id } = req.params;
   const { name, password, maxSelections } = req.body;
-
-  console.log('PUT /clients/:id called');
-  console.log('ID param:', id);
-  console.log('Body:', { name, password, maxSelections });
 
   const updateFields = {};
   if (name !== undefined) updateFields.name = name;
@@ -203,28 +203,28 @@ app.put('/clients/:id', async (req, res) => {
       .update(updateFields)
       .eq('id', id);
 
-    if (error) {
-      console.error('Supabase update error:', error.message);
-      return res.status(500).json({ error: error.message });
-    }
-
+    if (error) return res.status(500).json({ error: error.message });
     res.json({ success: true });
   } catch (err) {
-    console.error('PUT /clients/:id server error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
-// Update client info (name, password, maxSelections, or ID)
+
+// Update client info including ID
 app.post('/clients/update', async (req, res) => {
   const { oldId, id, name, password, maxSelections } = req.body;
   try {
     const { error } = await supabase
       .from('clients')
-      .update({ id, name, password, maxSelections })
+      .update({
+        id,
+        name,
+        password,
+        maxSelections: maxSelections ? parseInt(maxSelections) : null,
+      })
       .eq('id', oldId);
 
-    if (error) throw error;
-
+    if (error) return res.status(500).json({ error: error.message });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -234,4 +234,3 @@ app.post('/clients/update', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ BH Capture Co backend running on port ${PORT}`);
 });
-// Update client info (name, password, maxSelections)

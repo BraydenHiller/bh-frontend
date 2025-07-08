@@ -78,13 +78,15 @@ const saveClientEdits = async () => {
   try {
     const res = await fetch(`${API}/clients/update`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        oldId: editingClient.id, // original ID
-        id: editId,              // new ID (if changed)
+        oldId: editingClient.id,
+        id: editId,
         name: editName,
         password: editPassword,
-        maxSelections: editMax ? parseInt(editMax) : null,
+        maxSelections: parseInt(editMax),
       }),
     });
 
@@ -102,8 +104,6 @@ const saveClientEdits = async () => {
     alert('Server error. Failed to update client.');
   }
 };
-
-
 
   const cancelEdit = () => {
     setEditingClient(null);
