@@ -213,6 +213,22 @@ app.put('/clients/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+// Update client info (name, password, maxSelections, or ID)
+app.post('/clients/update', async (req, res) => {
+  const { oldId, id, name, password, maxSelections } = req.body;
+  try {
+    const { error } = await supabase
+      .from('clients')
+      .update({ id, name, password, maxSelections })
+      .eq('id', oldId);
+
+    if (error) throw error;
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`✅ BH Capture Co backend running on port ${PORT}`);
