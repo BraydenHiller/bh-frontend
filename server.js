@@ -220,14 +220,22 @@ app.post('/clients/update', async (req, res) => {
   try {
     const { error } = await supabase
       .from('clients')
-      .update({ id, name, password, maxSelections })
+      .update({ id,
+        name, 
+        password, 
+        maxSelections 
+      })
       .eq('id', oldId);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase update error:', error);
+      return res.status(500).json({ error: 'Failed to update client info' });
+    }
 
-    res.json({ success: true });
+    res.status(200).json({ success: true, data });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Server error:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
