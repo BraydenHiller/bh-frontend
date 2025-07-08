@@ -17,7 +17,7 @@ app.get('/', (req, res) => {
   res.send('📸 BH Capture Co backend with Showcase updates');
 });
 
-// Get showcase layout by status (draft or published)
+// Get showcase layout
 app.get('/showcase/:status', async (req, res) => {
   const { status } = req.params;
   try {
@@ -41,7 +41,7 @@ app.get('/showcase/:status', async (req, res) => {
   }
 });
 
-// Save layout as draft or published
+// Save showcase
 app.post('/showcase/save', async (req, res) => {
   const { layout, isDraft } = req.body;
   const status = isDraft ? 'draft' : 'published';
@@ -63,12 +63,11 @@ app.get('/clients', async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (err) {
-    console.error('GET /clients error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Create a new client
+// Create new client
 app.post('/clients', async (req, res) => {
   const { id, name, password } = req.body;
   if (!id || !name || !password) {
@@ -83,7 +82,7 @@ app.post('/clients', async (req, res) => {
 
     const { error } = await supabase
       .from('clients')
-      .insert([{ id, name, password, images: [] }]);
+      .insert([{ id, name, password, images: [], maxSelections: 20 }]);
 
     if (error) throw error;
 
@@ -93,7 +92,7 @@ app.post('/clients', async (req, res) => {
   }
 });
 
-// Upload images to client gallery
+// Upload images
 app.post('/upload', async (req, res) => {
   const { id, images } = req.body;
 
@@ -138,7 +137,7 @@ app.post('/update-images', async (req, res) => {
   }
 });
 
-// Delete a client and their selections
+// Delete a client
 app.delete('/clients/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -167,7 +166,7 @@ app.get('/selections', async (req, res) => {
   }
 });
 
-// Save selections for a client
+// Save selections
 app.post('/selections', async (req, res) => {
   const { id, selected } = req.body;
 
@@ -184,13 +183,11 @@ app.post('/selections', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Update client info by ID (PUT)
 app.put('/clients/:id', async (req, res) => {
   const { id } = req.params;
   const { name, password, maxSelections } = req.body;
-
-  console.log('PUT /clients/:id called');
-  console.log('ID param:', id);
-  console.log('Body:', { name, password, maxSelections });
 
   const updateFields = {};
   if (name !== undefined) updateFields.name = name;
@@ -203,49 +200,34 @@ app.put('/clients/:id', async (req, res) => {
       .update(updateFields)
       .eq('id', id);
 
-    if (error) {
-      console.error('Supabase update error:', error.message);
-      return res.status(500).json({ error: error.message });
-    }
-
+    if (error) return res.status(500).json({ error: error.message });
     res.json({ success: true });
   } catch (err) {
-    console.error('PUT /clients/:id server error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
-// Update client info (name, password, maxSelections, or ID)
+
+// Update client info including ID (POST)
 app.post('/clients/update', async (req, res) => {
   const { oldId, id, name, password, maxSelections } = req.body;
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('clients')
       .update({
         id,
         name,
         password,
-        maxSelections
+        maxSelections: maxSelections ? parseInt(maxSelections) : null,
       })
       .eq('id', oldId);
 
-    if (error) {
-      console.error('Supabase update error:', error);
-      return res.status(500).json({ error: 'Failed to update client info' });
-    }
-
-    res.status(200).json({ success: true, data });
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true });
   } catch (err) {
-    console.error('Server error:', err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: err.message });
   }
 });
-
-console.log('📍 Registered routes:', app._router.stack
-  .filter(r => r.route)
-  .map(r => r.route.path));
 
 app.listen(PORT, () => {
   console.log(`✅ BH Capture Co backend running on port ${PORT}`);
 });
-// Update client info (name, password, maxSelections)
-// Triggered update for Render redeploy
