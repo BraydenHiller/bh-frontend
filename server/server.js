@@ -206,6 +206,30 @@ app.put('/clients/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+app.put('/clients/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, password, maxSelections } = req.body;
+
+  console.log(`🔄 PUT /clients/${id}`, { name, password, maxSelections });
+
+  try {
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (password !== undefined) updates.password = password;
+    if (maxSelections !== undefined) updates.maxSelections = maxSelections;
+
+    const { data, error } = await supabase
+      .from('clients')
+      .update(updates)
+      .eq('id', id);
+
+    if (error) throw error;
+    res.json({ success: true, updated: data });
+  } catch (err) {
+    console.error('PUT /clients/:id error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`✅ BH Capture Co backend running on port ${PORT}`);
