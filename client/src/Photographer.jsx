@@ -79,7 +79,7 @@ const saveClientEdits = async () => {
   try {
     const response = await fetch(`${API}/clients/${editingClient.id}`, {
 
-      method: 'POST',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         oldId: editingClient.id, // original ID
