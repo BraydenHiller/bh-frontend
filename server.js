@@ -240,6 +240,7 @@ app.post('/clients/update', async (req, res) => {
   }
 });
 
+console.log(app._router.stack.filter(r => r.route).map(r => r.route.path));
 
 app.listen(PORT, () => {
   console.log(`✅ BH Capture Co backend running on port ${PORT}`);
