@@ -5,8 +5,13 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://hkoymztwxehqaqwoninw.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'your_supabase_key';
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  console.error("❌ Missing Supabase environment variables");
+  process.exit(1);
+}
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -41,7 +46,7 @@ app.get('/showcase/:status', async (req, res) => {
   }
 });
 
-// Save showcase
+// Save showcase layout
 app.post('/showcase/save', async (req, res) => {
   const { layout, isDraft } = req.body;
   const status = isDraft ? 'draft' : 'published';
@@ -55,7 +60,6 @@ app.post('/showcase/save', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 // Get all clients
 app.get('/clients', async (req, res) => {
   try {
@@ -69,7 +73,7 @@ app.get('/clients', async (req, res) => {
 
 // Create new client
 app.post('/clients', async (req, res) => {
-  const { id, name, password } = req.body;
+  const { id, name, password, maxSelections } = req.body;
   if (!id || !name || !password) {
     return res.status(400).json({ error: 'Missing fields' });
   }
@@ -82,7 +86,7 @@ app.post('/clients', async (req, res) => {
 
     const { error } = await supabase
       .from('clients')
-      .insert([{ id, name, password, images: [], maxSelections: 20 }]);
+      .insert([{ id, name, password, images: [], maxSelections: maxSelections || 20 }]);
 
     if (error) throw error;
 
@@ -119,7 +123,6 @@ app.post('/upload', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 // Replace client images
 app.post('/update-images', async (req, res) => {
   const { id, images } = req.body;
@@ -184,7 +187,7 @@ app.post('/selections', async (req, res) => {
   }
 });
 
-// Update client info by ID (PUT)
+// Update client info by ID
 app.put('/clients/:id', async (req, res) => {
   const { id } = req.params;
   const { name, password, maxSelections } = req.body;
@@ -207,7 +210,7 @@ app.put('/clients/:id', async (req, res) => {
   }
 });
 
-// Update client info including ID (POST)
+// Update client info including ID
 app.post('/clients/update', async (req, res) => {
   const { oldId, id, name, password, maxSelections } = req.body;
   try {
