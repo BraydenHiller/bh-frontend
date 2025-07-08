@@ -75,34 +75,34 @@ const Photographer = () => {
   // 🔽 ONLY THIS SECTION IS UPDATED
 const saveClientEdits = async () => {
   if (!editingClient) return;
-
   try {
-    const response = await fetch(`${API}/clients/${editingClient.id}`, {
-
+    const res = await fetch(`${API}/clients/update`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         oldId: editingClient.id, // original ID
-        id: editId,
+        id: editId,              // new ID (if changed)
         name: editName,
         password: editPassword,
         maxSelections: editMax ? parseInt(editMax) : null,
       }),
     });
 
-    const result = await response.json();
-    if (!response.ok) {
-      alert(result.error || 'Failed to update client.');
+    if (!res.ok) {
+      const errData = await res.text();
+      console.error('Error saving edits:', errData);
+      alert('Failed to save edits. Check console for details.');
       return;
     }
 
-    console.log('✅ Client updated:', result);
     setEditingClient(null);
-    fetchClients();
+    fetchClients(); // refresh list
   } catch (err) {
-    console.error('❌ Error saving edits:', err);
+    console.error('Failed to update client:', err);
+    alert('Server error. Failed to update client.');
   }
 };
+
 
 
   const cancelEdit = () => {

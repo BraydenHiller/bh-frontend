@@ -188,8 +188,9 @@ app.put('/clients/:id', async (req, res) => {
   const { id } = req.params;
   const { name, password, maxSelections } = req.body;
 
-  console.log('Received update for client:', id);
-  console.log('Update payload:', { name, password, maxSelections });
+  console.log('PUT /clients/:id called');
+  console.log('ID param:', id);
+  console.log('Body:', { name, password, maxSelections });
 
   const updateFields = {};
   if (name !== undefined) updateFields.name = name;
